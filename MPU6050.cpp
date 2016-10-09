@@ -662,7 +662,7 @@ int MPU6050_Init(uint8_t* ret_addr, uint8_t* ret_pwr_mgm)
 
   MPU6050_write_reg (MPU6050_GYRO_CONFIG, (1<<4)|(1<<3));
   MPU6050_write_reg (MPU6050_ACCEL_CONFIG, (1<<4)|(1<<3));
-  MPU6050_write_reg (MPU6050_CONFIG, 2);
+  MPU6050_write_reg (MPU6050_CONFIG, 6);
   //DLPF_CFG setting 2 BW 94~98Hz delay 3ms
   //DLPF_CFG setting 6 BW  58Hz   delay 19ms
 

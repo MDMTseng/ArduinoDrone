@@ -3,12 +3,27 @@
 #include "ApproMath.hpp"
 #include "Orientation_Fusion.hpp"
 
-
+void driveMotor(int pin,uint16_t T)
+{
+  digitalWrite(pin, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1);
+  delayMicroseconds(T);
+  digitalWrite(pin, LOW);    // turn the LED off by making the voltage LOW
+}
+void driveMotorS(int pin,uint16_t T)
+{
+  if(T>700)T=700;
+  digitalWrite(pin, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1);
+  delayMicroseconds(T);
+  digitalWrite(pin, LOW);    // turn the LED off by making the voltage LOW
+}
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(115200);
   // initialize digital pin 13 as an output.
   pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
 
 
   int16_t i;
@@ -18,33 +33,51 @@ void setup() {
   MPU6050_Init(NULL, NULL);
   
 
-  
-  for(i=0;i<3*1000/20;i++)
+  /*for(i=0;i<15*1000/20;i++)
   {
     
-    digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(1);
-    digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+    driveMotor(13,1000);
+    driveMotor(12,01000);
+    delay(19);
+  }*/
+  
+  for(i=0;i<1*1000/20;i++)
+  {
+    
+    driveMotor(13,0);
+    driveMotor(12,0);
     delay(19);
   }
 
-  
+  //while(1);
 }
 
-void driveMotor(uint16_t T)
+int16_t controller(const OriFus_EulerAngle *euler_sys_Angle)
 {
-  if(T>200)T=200;
-  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1);
-  delayMicroseconds(15+T);
-  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+  float e_roll = euler_sys_Angle->roll-0;
+  static float pre_e_Roll = e_roll;
+  static float Inte_e_Roll = 0;
+  Inte_e_Roll+=e_roll/100;
+  if(Inte_e_Roll>100)Inte_e_Roll=100;
+  else if(Inte_e_Roll<-100)Inte_e_Roll=-100;
+
+  
+  /*float Pout = e_roll*4;
+  float Dout = (e_roll - pre_e_Roll)*300;
+  float Iout = Inte_e_Roll*5;*/
+  float Pout = e_roll*6.5;
+  float Dout = (e_roll - pre_e_Roll)*300;
+  float Iout = Inte_e_Roll*0;
+  pre_e_Roll=e_roll;
+  return Pout+Dout+Iout;
 }
+
 
 unsigned long XX=0;
 // the loop function runs over and over again forever
 const float RAD2DEG=180.0 / M_PI;
 OriFus_EulerAngle euler_sys_Angle={0,0,0};
-volatile uint16_t dfdf[3000];
+//volatile uint16_t dfdf[3000];
 unsigned long preLoop = 0;
 void loop() {
   XX++;
@@ -81,14 +114,22 @@ void loop() {
   Serial.print(BUF);*/
   OriFus_ComplementaryFilter(&euler_sys_Angle,&euler_acc_Angle, &euler_gyro_Angle);
 
-  driveMotor(100-euler_sys_Angle.roll*2);
-  if((XX&(8-1))==1)
+
+  int16_t CC=controller(&euler_sys_Angle);
+  uint16_t thrust = 600;
+  
+  driveMotorS(13,thrust-CC);
+  driveMotorS(12,thrust+CC);
+  driveMotorS(11,200-euler_sys_Angle.roll*4);
+  driveMotorS(10,200+euler_sys_Angle.roll*4);
+  if((XX&(32-1))==1)
   {
     Serial.print(1/period);Serial.print(" ");
-    Serial.print(euler_sys_Angle.pitch);Serial.print(" ");
-    Serial.print(euler_sys_Angle.roll);Serial.print(" ");
-    Serial.print(euler_sys_Angle.yaw);
+    Serial.print((float)CC);Serial.print(" ");
+    //Serial.print(euler_sys_Angle.pitch);Serial.print(" ");
+    //Serial.print(euler_sys_Angle.roll);Serial.print(" ");
+    //Serial.print(euler_sys_Angle.yaw);
     Serial.println();
   }
-  delay(10);
+  delay(1);
 }

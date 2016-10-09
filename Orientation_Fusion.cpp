@@ -21,7 +21,7 @@ void OriFus_EulerAngle_Conv(OriFus_EulerAngle* eulerAngle,int16_t accelX,int16_t
 
 void OriFus_ComplementaryFilter(OriFus_EulerAngle* sys_eulerAngle,const OriFus_EulerAngle* acc_eulerAngle, const OriFus_EulerAngle* gyro_Angle) {
   
-  float P_CompCoeff= 0.95;
+  float P_CompCoeff= 0.99;
   
   sys_eulerAngle->roll=
     P_CompCoeff*(sys_eulerAngle->roll+gyro_Angle->roll)+(1-P_CompCoeff)*(acc_eulerAngle->roll);
