@@ -2,7 +2,11 @@
 #include "MPU6050.hpp"
 #include "ApproMath.hpp"
 #include "Orientation_Fusion.hpp"
+#include "MPU6050_DMP6/MPU6050_6Axis_MotionAppsT.h"
 
+MPU6050 mpu;
+bool dmpReady = false;  // set true if DMP init was successful
+uint8_t packetSize;
 void driveMotor(int pin,uint16_t T)
 {
   digitalWrite(pin, HIGH);   // turn the LED on (HIGH is the voltage level)
@@ -29,19 +33,9 @@ void setup() {
   int16_t i;
 
   
+  setup_6050();
 
-  MPU6050_Init(NULL, NULL);
-  
-
-  /*for(i=0;i<15*1000/20;i++)
-  {
-    
-    driveMotor(13,1000);
-    driveMotor(12,01000);
-    delay(19);
-  }*/
-  
-  for(i=0;i<1*1000/20;i++)
+  for(i=0;i<3*1000/20;i++)
   {
     
     driveMotor(13,0);
@@ -52,84 +46,178 @@ void setup() {
   //while(1);
 }
 
-int16_t controller(const OriFus_EulerAngle *euler_sys_Angle)
+int16_t controller(const OriFus_EulerAngle *euler_sys_Angle,const OriFus_EulerAngle *con_Angle)
 {
-  float e_roll = euler_sys_Angle->roll-0;
+  float e_roll = euler_sys_Angle->roll-con_Angle->roll;
   static float pre_e_Roll = e_roll;
   static float Inte_e_Roll = 0;
   Inte_e_Roll+=e_roll/100;
   if(Inte_e_Roll>100)Inte_e_Roll=100;
   else if(Inte_e_Roll<-100)Inte_e_Roll=-100;
 
-  
-  /*float Pout = e_roll*4;
-  float Dout = (e_roll - pre_e_Roll)*300;
-  float Iout = Inte_e_Roll*5;*/
-  float Pout = e_roll*6.5;
-  float Dout = (e_roll - pre_e_Roll)*300;
-  float Iout = Inte_e_Roll*0;
+  float Pout = e_roll*5.5;
+  float Dout = (e_roll - pre_e_Roll)*200;
+  float Iout = Inte_e_Roll*2;
   pre_e_Roll=e_roll;
   return Pout+Dout+Iout;
 }
 
+unsigned long preLoop = 0;
+void loop() {
+  read_6050();
+  
+}
 
 unsigned long XX=0;
 // the loop function runs over and over again forever
 const float RAD2DEG=180.0 / M_PI;
-OriFus_EulerAngle euler_sys_Angle={0,0,0};
+
+OriFus_EulerAngle control_Angle={10,0,0};
 //volatile uint16_t dfdf[3000];
-unsigned long preLoop = 0;
-void loop() {
-  XX++;
-  //dfdf[XX]=XX;
-  unsigned long nowLoop= millis();
-  static float period=0;
-  period=(0.8*period+0.2*(nowLoop-preLoop)/1000.0);
-  preLoop= nowLoop; 
+void GetNewIMUData(Quaternion *q)
+{
   
-  accel_t_gyro_union data;
-  MPU6050_AquireRawData(&data);
-  char BUF[300];
+      float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+      static float period=0;
+      unsigned long nowLoop= millis();
+      static long preLoop=nowLoop;
+      period=(0.8*period+0.2*(nowLoop-preLoop)/1000.0);
+      preLoop= nowLoop; 
 
-  OriFus_EulerAngle euler_acc_Angle;
-  OriFus_EulerAngle_Conv(&euler_acc_Angle,data.value.x_accel,data.value.y_accel,data.value.z_accel);
-  euler_acc_Angle.pitch*=RAD2DEG;
-  euler_acc_Angle.roll*=RAD2DEG;
-  euler_acc_Angle.yaw*=RAD2DEG;
-  
-  OriFus_EulerAngle euler_gyro_Angle;
-  float gyroFactor = period/16.4;//16.4 is the sensitivity factor when MPU6050_GYRO_CONFIG=>0001 1000
-
-  /*static float SUM=0;
-  SUM+=data.value.z_gyro;*/
-
-  euler_gyro_Angle.roll=((float)data.value.x_gyro-0.5)*gyroFactor;
-  euler_gyro_Angle.pitch=((float)data.value.y_gyro-10.88)*gyroFactor;
-  euler_gyro_Angle.yaw=((float)data.value.z_gyro-3.95)*gyroFactor;
-  
-  /*sprintf(BUF,"G:%d %d %d\n",
-    data.value.x_accel,
-    data.value.y_accel,
-    data.value.z_accel);
-  Serial.print(BUF);*/
-  OriFus_ComplementaryFilter(&euler_sys_Angle,&euler_acc_Angle, &euler_gyro_Angle);
+      //Serial.print(1/period);Serial.print(" ");
+      
+      mpu.dmpGetEuler(ypr, q);
+      
+      OriFus_EulerAngle euler_sys_Angle={0,0,0};
+    
+      euler_sys_Angle.yaw  =ypr[0] * 180/M_PI;
+      euler_sys_Angle.pitch=ypr[1] * 180/M_PI;
+      euler_sys_Angle.roll =ypr[2] * 180/M_PI;
 
 
-  int16_t CC=controller(&euler_sys_Angle);
-  uint16_t thrust = 600;
-  
-  driveMotorS(13,thrust-CC);
-  driveMotorS(12,thrust+CC);
-  driveMotorS(11,200-euler_sys_Angle.roll*4);
-  driveMotorS(10,200+euler_sys_Angle.roll*4);
-  if((XX&(32-1))==1)
-  {
-    Serial.print(1/period);Serial.print(" ");
-    Serial.print((float)CC);Serial.print(" ");
-    //Serial.print(euler_sys_Angle.pitch);Serial.print(" ");
-    //Serial.print(euler_sys_Angle.roll);Serial.print(" ");
-    //Serial.print(euler_sys_Angle.yaw);
-    Serial.println();
-  }
-  delay(1);
+      
+      int16_t CC=controller(&euler_sys_Angle,&control_Angle);
+      uint16_t thrust = 600;
+      
+      driveMotorS(13,thrust-CC);
+      driveMotorS(12,thrust+CC);
+      driveMotorS(11,200-euler_sys_Angle.roll*4);
+      driveMotorS(10,200+euler_sys_Angle.roll*4);
+      if((XX&(32-1))==1)
+      {
+    
+        char BUF[30];
+        //Serial.print(1/period);Serial.print(" ");
+        sprintf(BUF,"%03d  %4d %4d %4d",(int)(1/period),(int)control_Angle.roll,(int)euler_sys_Angle.roll,CC);
+        Serial.println(BUF);
+        /*Serial.print((float)CC);Serial.print(" ");
+        //Serial.print(euler_sys_Angle.pitch);Serial.print(" ");
+        //Serial.print(euler_sys_Angle.roll);Serial.print(" ");
+        //Serial.print(euler_sys_Angle.yaw);
+        Serial.println();*/
+      }
+
+      if((XX&(1024-1))==1)
+      {
+        control_Angle.roll=-control_Angle.roll;
+      }
+      
+
+      XX++;
 }
+
+
+void read_6050() {
+    uint8_t fifoBuffer[64]; // FIFO storage buffer
+    // if programming failed, don't try to do anything
+    if (!dmpReady) return;
+
+
+    // reset interrupt flag and get INT_STATUS byte
+    uint8_t mpuIntStatus = mpu.getIntStatus();
+
+    // get current FIFO count
+    uint16_t fifoCount = mpu.getFIFOCount();
+
+    // check for overflow (this should never happen unless our code is too inefficient)
+    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+        // reset so we can continue cleanly
+        mpu.resetFIFO();
+        Serial.println(F("FIFO overflow!"));
+
+    // otherwise, check for DMP data ready interrupt (this should happen frequently)
+    } else if (mpuIntStatus & 0x2){
+
+      // wait for correct available data length, should be a VERY short wait
+      while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
+      
+
+      mpu.getFIFOBytes(fifoBuffer, packetSize);
+      fifoCount -= packetSize;
+      /*while(fifoCount>=packetSize){
+        mpu.getFIFOBytes(fifoBuffer, packetSize);
+        fifoCount -= packetSize;
+      }*/
+
+      
+      Quaternion q;           // [w, x, y, z]         quaternion container
+      mpu.dmpGetQuaternion(&q, fifoBuffer);
+      GetNewIMUData(&q);
+  }
+}
+
+
+
+
+
+
+void setup_6050() {
+    // join I2C bus (I2Cdev library doesn't do this automatically)
+    Wire.begin();
+    Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
+
+    Serial.println(F("Initializing I2C devices..."));
+    mpu.initialize();
+    //pinMode(INTERRUPT_PIN, INPUT);
+
+    // verify connection
+    Serial.println(F("Testing device connections..."));
+    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+
+    // load and configure the DMP
+    Serial.println(F("Initializing DMP..."));
+    uint8_t devStatus = mpu.dmpInitialize();
+    mpu.setXGyroOffset(1);
+    mpu.setYGyroOffset(13);
+    mpu.setZGyroOffset(-6);
+    mpu.setZAccelOffset(800);
+    // make sure it worked (returns 0 if so)
+    if (devStatus == 0) {
+        // turn on the DMP, now that it's ready
+        Serial.println(F("Enabling DMP..."));
+        mpu.setDMPEnabled(true);
+ 
+        // enable Arduino interrupt detection
+        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+        
+        //attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+        
+        uint8_t mpuIntStatus = mpu.getIntStatus();
+
+        // set our DMP Ready flag so the main loop() function knows it's okay to use it
+        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+        dmpReady = true;
+
+        // get expected DMP packet size for later comparison
+        packetSize = mpu.dmpGetFIFOPacketSize();
+    } else {
+        // ERROR!
+        // 1 = initial memory load failed
+        // 2 = DMP configuration updates failed
+        // (if it's going to break, usually the code will be 1)
+        Serial.print(F("DMP Initialization failed (code "));
+        Serial.print(devStatus);
+        Serial.println(F(")"));
+    }
+}
+

@@ -4,8 +4,8 @@
 
 typedef struct __OriFus_EulerAngle
 {
-  float pitch;
   float roll;
+  float pitch;
   float yaw;
 }OriFus_EulerAngle;
 
