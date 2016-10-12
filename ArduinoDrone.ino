@@ -7,15 +7,17 @@
 MPU6050 mpu;
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t packetSize;
-void driveMotor(int pin,uint16_t T)
+void driveMotor(int pin,int16_t T)
 {
+  if(T<0)T=0;
   digitalWrite(pin, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1);
   delayMicroseconds(T);
   digitalWrite(pin, LOW);    // turn the LED off by making the voltage LOW
 }
-void driveMotorS(int pin,uint16_t T)
+void driveMotorS(int pin,int16_t T)
 {
+  if(T<0)T=0;
   if(T>700)T=700;
   digitalWrite(pin, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1);
@@ -35,7 +37,7 @@ void setup() {
   
   setup_6050();
 
-  for(i=0;i<3*1000/20;i++)
+  for(i=0;i<7*1000/20;i++)
   {
     
     driveMotor(13,0);
@@ -51,13 +53,13 @@ int16_t controller(const OriFus_EulerAngle *euler_sys_Angle,const OriFus_EulerAn
   float e_roll = euler_sys_Angle->roll-con_Angle->roll;
   static float pre_e_Roll = e_roll;
   static float Inte_e_Roll = 0;
-  Inte_e_Roll+=e_roll/100;
+  Inte_e_Roll+=e_roll/1000;
   if(Inte_e_Roll>100)Inte_e_Roll=100;
   else if(Inte_e_Roll<-100)Inte_e_Roll=-100;
 
-  float Pout = e_roll*5.5;
-  float Dout = (e_roll - pre_e_Roll)*200;
-  float Iout = Inte_e_Roll*2;
+  float Pout = e_roll*7;
+  float Dout = (e_roll - pre_e_Roll)*300;
+  float Iout = Inte_e_Roll*15;
   pre_e_Roll=e_roll;
   return Pout+Dout+Iout;
 }
@@ -72,7 +74,7 @@ unsigned long XX=0;
 // the loop function runs over and over again forever
 const float RAD2DEG=180.0 / M_PI;
 
-OriFus_EulerAngle control_Angle={10,0,0};
+OriFus_EulerAngle control_Angle={25,0,0};
 //volatile uint16_t dfdf[3000];
 void GetNewIMUData(Quaternion *q)
 {
@@ -97,7 +99,7 @@ void GetNewIMUData(Quaternion *q)
 
       
       int16_t CC=controller(&euler_sys_Angle,&control_Angle);
-      uint16_t thrust = 600;
+      uint16_t thrust = 500;
       
       driveMotorS(13,thrust-CC);
       driveMotorS(12,thrust+CC);
@@ -117,7 +119,7 @@ void GetNewIMUData(Quaternion *q)
         Serial.println();*/
       }
 
-      if((XX&(1024-1))==1)
+      if((XX&(128-1))==1)
       {
         control_Angle.roll=-control_Angle.roll;
       }
