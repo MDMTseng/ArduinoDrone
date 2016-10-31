@@ -48,18 +48,21 @@ void setup() {
   //while(1);
 }
 
-int16_t controller(const OriFus_EulerAngle *euler_sys_Angle,const OriFus_EulerAngle *con_Angle)
+float controller(const OriFus_EulerAngle *euler_sys_Angle,const OriFus_EulerAngle *con_Angle)
 {
   float e_roll = euler_sys_Angle->roll-con_Angle->roll;
   static float pre_e_Roll = e_roll;
   static float Inte_e_Roll = 0;
-  Inte_e_Roll+=e_roll/1000;
-  if(Inte_e_Roll>100)Inte_e_Roll=100;
-  else if(Inte_e_Roll<-100)Inte_e_Roll=-100;
+  Inte_e_Roll+=e_roll;
+  if(Inte_e_Roll>10000)Inte_e_Roll=10000;
+  else if(Inte_e_Roll<-10000)Inte_e_Roll=-10000;
 
-  float Pout = e_roll*7;
-  float Dout = (e_roll - pre_e_Roll)*300;
-  float Iout = Inte_e_Roll*15;
+  float Ts=0.01;
+//1.4,3.7,0.7
+//1.1,3.7,0.8
+  float Pout = e_roll*1;
+  float Iout = Inte_e_Roll*3.5*Ts;
+  float Dout = (e_roll - pre_e_Roll)*0.7/Ts;
   pre_e_Roll=e_roll;
   return Pout+Dout+Iout;
 }
@@ -97,20 +100,25 @@ void GetNewIMUData(Quaternion *q)
       euler_sys_Angle.roll =ypr[2] * 180/M_PI;
 
 
+      static float TestX=0;
+      float CC=controller(&euler_sys_Angle,&control_Angle);
+      int16_t QCC=CC;
+      uint16_t thrust = 200;
       
-      int16_t CC=controller(&euler_sys_Angle,&control_Angle);
-      uint16_t thrust = 500;
-      
-      driveMotorS(13,thrust-CC);
-      driveMotorS(12,thrust+CC);
-      driveMotorS(11,200-euler_sys_Angle.roll*4);
-      driveMotorS(10,200+euler_sys_Angle.roll*4);
-      if((XX&(32-1))==1)
+      driveMotorS(13,thrust-QCC);
+      driveMotorS(12,thrust+QCC);
+      driveMotorS(11,thrust-QCC);
+      driveMotorS(10,thrust+QCC);
+      if(1)
       {
     
         char BUF[30];
         //Serial.print(1/period);Serial.print(" ");
-        sprintf(BUF,"%03d  %4d %4d %4d",(int)(1/period),(int)control_Angle.roll,(int)euler_sys_Angle.roll,CC);
+        sprintf(BUF,"%03d  %4d %4d %4d",
+        (int)(1/period),
+        (int)(control_Angle.roll*100),
+        (int)(QCC),
+        (int)(euler_sys_Angle.roll*100));
         Serial.println(BUF);
         /*Serial.print((float)CC);Serial.print(" ");
         //Serial.print(euler_sys_Angle.pitch);Serial.print(" ");
@@ -119,12 +127,15 @@ void GetNewIMUData(Quaternion *q)
         Serial.println();*/
       }
 
-      if((XX&(128-1))==1)
+      /*if((XX&(1024-1))==1)
       {
-        control_Angle.roll=-control_Angle.roll;
-      }
+        //control_Angle.roll=-control_Angle.roll;
+        TestX=-TestX;
+      }*/
+      TestX=(sin(XX*3.14/180 /3)>0.97)?30:-30;;
       
-
+      //control_Angle.roll=(sin(XX*3.14/180 /3)>0.97)?20:-20;//((XX*2)%1000)/10.0-50;
+      control_Angle.roll=((XX%1000)/500.0-1)*30;
       XX++;
 }
 
