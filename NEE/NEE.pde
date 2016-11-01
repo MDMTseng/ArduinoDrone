@@ -80,16 +80,20 @@ class s_neuron{
   public double d_exciteF(double sigmoid_var) {
     
     sigmoid_var=(sigmoid_var+1)/2;
-    return sigmoid_var*(1-(sigmoid_var))+0.05;
+    double slop=2*sigmoid_var*(1-(sigmoid_var));
+    if(slop>0&&slop<0.1)return 0.1;
+    if(slop<0&&slop>-0.1)return -0.1;
+    return slop;
   }
 }
 
 class s_neuron_net{
   ArrayList <s_neuron[]> ns;
-  s_neuron ones[]=new s_neuron[3];
+  s_neuron ones[]=new s_neuron[4];
   s_neuron input[] =new s_neuron[1];
-  s_neuron hidden[] =new s_neuron[7];
+  s_neuron hidden[] =new s_neuron[5];
   public s_neuron hidden2[] =new s_neuron[5];
+  public s_neuron hidden3[] =new s_neuron[15];
   public s_neuron output[] =new s_neuron[1];
   
   float XRand()
@@ -117,13 +121,15 @@ class s_neuron_net{
     }
     ns.add(input);
     
+    s_neuron prelayer[]=input;
+    
     
     for(int i=0;i<hidden.length;i++)
     {
       hidden[i] = new s_neuron(1);
-      for(int j=0;j<input.length;j++)
+      for(int j=0;j<prelayer.length;j++)
       {
-        hidden[i].add_pre_neuron(input[j],XRand());
+        hidden[i].add_pre_neuron(prelayer[j],XRand());
       }
       hidden[i].add_pre_neuron(ones[0],XRand());
     }
@@ -131,26 +137,43 @@ class s_neuron_net{
     
     
     
+    prelayer=hidden;
     for(int i=0;i<hidden2.length;i++)
     {
       hidden2[i] = new s_neuron(1);
-      for(int j=0;j<hidden.length;j++)
+      for(int j=0;j<prelayer.length;j++)
       {
-        hidden2[i].add_pre_neuron(hidden[j],XRand());
+        hidden2[i].add_pre_neuron(prelayer[j],XRand());
       }
       hidden2[i].add_pre_neuron(ones[1],XRand());
     }
     ns.add(hidden2);
     
     
+    
+    prelayer=hidden2;
+    for(int i=0;i<hidden3.length;i++)
+    {
+      hidden3[i] = new s_neuron(1);
+      for(int j=0;j<prelayer.length;j++)
+      {
+        hidden3[i].add_pre_neuron(prelayer[j],XRand());
+      }
+      hidden3[i].add_pre_neuron(ones[2],XRand());
+    }
+    ns.add(hidden3);
+    
+    
+    
+    prelayer=hidden3;
     for(int i=0;i<output.length;i++)
     {
       output[i] = new s_neuron(1);
-      for(int j=0;j<hidden2.length;j++)
+      for(int j=0;j<prelayer.length;j++)
       {
-        output[i].add_pre_neuron(hidden2[j],XRand());
+        output[i].add_pre_neuron(prelayer[j],XRand());
       }
-      output[i].add_pre_neuron(ones[2],XRand());
+      output[i].add_pre_neuron(ones[3],XRand());
     }
     ns.add(output);
     
@@ -177,15 +200,14 @@ class s_neuron_net{
     for(int i=0;i<PErr.length;i++)PErr[i]=0;
     
     float lRate;
-    float limit = 10/layer[0].pre_neuron_L;
+    float limit =0.7;
     for (int i=0;i<Error.length;i++) {
       float dPdZ = Error[i];
       
       lRate = dPdZ*limit;
       if(lRate<0)lRate=-lRate;
-      if(lRate>limit)lRate=limit;
       float dropO=1;//random(0, 1)>0.005? 1:0.4;
-      lRate=limit*dropO;//(float)Math.log(limit*dropO+1);
+      lRate=limit;//*(random(0.5, 1.1));//(float)Math.log(limit*dropO+1);
       
       
       float dZdY = (float)layer[i].d_exciteF(layer[i].latestVar);
@@ -193,17 +215,11 @@ class s_neuron_net{
       {
         float dYdW = layer[i].pre_neuron_list[j].latestVar;
         
-        float updateWVar = dPdZ*dZdY*dYdW*lRate;
-        
         if(j!=layer[i].pre_neuron_L-1)
         {
-          PErr[j]+=dPdZ*dZdY*(layer[i].W[j]);
+          PErr[j]+=dPdZ*dZdY*(layer[i].W[j])/Error.length;
         }
-        else
-        {
-          updateWVar/=2;
-        }
-        layer[i].W[j]+=updateWVar;
+        layer[i].W[j]+=dPdZ*dZdY*dYdW*lRate;
         
       }
     }
@@ -364,7 +380,7 @@ class s_neuron_net{
 
 s_neuron_net nn = new s_neuron_net();
 
-float InX[]=new float[50];
+float InX[]=new float[80];
 float OuY[]=new float[InX.length];
   
 void setup() {
@@ -372,13 +388,6 @@ void setup() {
   background(255);
   //noLoop();
   
-  
-  
-  for(int i=0;i<InX.length;i++)
-  {
-    InX[i]=0.5*i/InX.length;
-    OuY[i]=(i>(InX.length/6)&&i<(InX.length*5/6))?sin(InX[i]*InX[i]*150-TrainCount/7000.0)*0.4+0.4: 0;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
-  }
   
   
 }
@@ -398,9 +407,9 @@ void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
       for(int k=0;k<layerNodes[j].pre_neuron_L-1;k++)
       {
         if(layerNodes[j].W[k]>0)
-          stroke(0,layerNodes[j].W[k]*100,0,129);
+          stroke(0,(int)(Math.log(layerNodes[j].W[k]+1)*500),0,80);
         else
-          stroke(-layerNodes[j].W[k]*100,0,0,129);
+          stroke((int)(Math.log(-layerNodes[j].W[k]+1)*500),0,0,80);
         
         line(
           x+j*w/layerNodes.length+x_start    , y+i*h/layerNum, 
@@ -433,12 +442,19 @@ void draw() {
   int hH=height/2;
   
   
-  float err=nn.TestTrain(InX,OuY,50);
-  TrainCount+=50;
+  for(int i=0;i<InX.length;i++)
+  {
+    InX[i]=0.5*i/InX.length;
+    OuY[i]=(i>(InX.length/6)&&i<(InX.length*5/6))?sin(InX[i]*InX[i]*150-TrainCount/2000.0)*0.4+0.4: 0;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
+  }
+  
+  
+  float err=nn.TestTrain(InX,OuY,150);
+  TrainCount+=150;
   
   float preVar_hidden[]=new float[nn.hidden.length];
   
-  float preVar_hidden2[]=new float[nn.hidden2.length];
+  float preVar_hidden3[]=new float[nn.hidden3.length];
   float preVar=0;
   for (int i = 0; i < width; i += 5) {
     nn.SetCalcNeuronInputData(i*0.5/width);
@@ -447,19 +463,19 @@ void draw() {
     for(int n=0;n<preVar_hidden.length;n++)
     {
       //stroke((n+5)*255/(preVar_hidden.length+5),0,0);
-      stroke(255,0,0,129);
+      stroke(255,0,0,50);
       tmp=nn.hidden[n].latestVar*100;
       line(i,preVar_hidden[n]+hH,i+5,-tmp+hH);
       preVar_hidden[n]=-tmp;
     }
     
-    for(int n=0;n<preVar_hidden2.length;n++)
+    for(int n=0;n<preVar_hidden3.length;n++)
     {
       //stroke((n+5)*255/(preVar_hidden.length+5),0,0);
-      stroke(0,255,255,129);
-      tmp=nn.hidden2[n].latestVar*100;
-      line(i,preVar_hidden2[n]+hH,i+5,-tmp+hH);
-      preVar_hidden2[n]=-tmp;
+      stroke(0,255,255,50);
+      tmp=nn.hidden3[n].latestVar*100;
+      line(i,preVar_hidden3[n]+hH,i+5,-tmp+hH);
+      preVar_hidden3[n]=-tmp;
     }
     
     stroke(250);
@@ -476,5 +492,5 @@ void draw() {
   
   drawNN(nn,10,10,550,350);
   System.out.printf("ERR:%1.5f C:%05d\n",err,TrainCount);
-  if(err>-0.005)noLoop();
+  //if(err>-0.005)noLoop();
 }
