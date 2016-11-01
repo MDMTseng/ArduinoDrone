@@ -74,15 +74,13 @@ class s_neuron{
     post_neuron_L++;
   }
   public double exciteF(double x) {
-    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
+    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2;
   }
   
   public double d_exciteF(double sigmoid_var) {
     
-    sigmoid_var=(sigmoid_var+1)/2;
+    sigmoid_var=(sigmoid_var)/2;
     double slop=2*sigmoid_var*(1-(sigmoid_var));
-    if(slop>0&&slop<0.1)return 0.1;
-    if(slop<0&&slop>-0.1)return -0.1;
     return slop;
   }
 }
@@ -92,8 +90,8 @@ class s_neuron_net{
   s_neuron ones[]=new s_neuron[4];
   s_neuron input[] =new s_neuron[1];
   s_neuron hidden[] =new s_neuron[5];
-  public s_neuron hidden2[] =new s_neuron[5];
-  public s_neuron hidden3[] =new s_neuron[15];
+  public s_neuron hidden2[] =new s_neuron[20];
+  public s_neuron hidden3[] =new s_neuron[21];
   public s_neuron output[] =new s_neuron[1];
   
   float XRand()
@@ -200,7 +198,7 @@ class s_neuron_net{
     for(int i=0;i<PErr.length;i++)PErr[i]=0;
     
     float lRate;
-    float limit =0.7;
+    float limit =0.5;
     for (int i=0;i<Error.length;i++) {
       float dPdZ = Error[i];
       
@@ -302,7 +300,7 @@ class s_neuron_net{
         Train_S(expectedOut);
       }
      
-      for(int j=0;j<0;j++)
+      for(int j=0;j<1;j++)
       {
         
         input[0].latestVar=InX[maxErrIdx];
@@ -388,8 +386,6 @@ void setup() {
   background(255);
   //noLoop();
   
-  
-  
 }
 
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
@@ -432,6 +428,7 @@ void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
   }
   
   
+  
 }
 
 
@@ -449,8 +446,9 @@ void draw() {
   }
   
   
-  float err=nn.TestTrain(InX,OuY,150);
-  TrainCount+=150;
+  
+  float err=nn.TestTrain(InX,OuY,50);
+  TrainCount+=50;
   
   float preVar_hidden[]=new float[nn.hidden.length];
   
