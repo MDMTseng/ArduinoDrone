@@ -89,7 +89,7 @@ class s_neuron_net{
   s_neuron ones[]=new s_neuron[3];
   s_neuron input[] =new s_neuron[1];
   s_neuron hidden[] =new s_neuron[7];
-  public s_neuron hidden2[] =new s_neuron[7];
+  public s_neuron hidden2[] =new s_neuron[5];
   public s_neuron output[] =new s_neuron[1];
   
   float XRand()
@@ -223,7 +223,6 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      
       Error = Train_1(this.ns.get(i),Error);
     }
     
@@ -369,7 +368,7 @@ float InX[]=new float[50];
 float OuY[]=new float[InX.length];
   
 void setup() {
-  size(640, 360);
+  size(640, 860);
   background(255);
   //noLoop();
   
@@ -383,6 +382,49 @@ void setup() {
   
   
 }
+
+void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
+{
+  int layerNum=nnet.ns.size();
+  
+  for(int i=layerNum-1;i!=0;i--)
+  {
+    s_neuron layerNodes[]=nnet.ns.get(i);
+    for(int j=0;j<layerNodes.length;j++)
+    {
+      int x_start=w/layerNodes.length/2;
+      int x_start_pre=w/(layerNodes[j].pre_neuron_L-1)/2;
+      
+      for(int k=0;k<layerNodes[j].pre_neuron_L-1;k++)
+      {
+        if(layerNodes[j].W[k]>0)
+          stroke(0,layerNodes[j].W[k]*100,0,129);
+        else
+          stroke(-layerNodes[j].W[k]*100,0,0,129);
+        
+        line(
+          x+j*w/layerNodes.length+x_start    , y+i*h/layerNum, 
+          x+k*w/(layerNodes[j].pre_neuron_L-1)+x_start_pre, y+(i-1)*h/layerNum
+        );
+      }
+    }
+  }
+  
+  
+  
+  for(int i=0;i<layerNum;i++)
+  {
+    s_neuron layerNodes[]=nnet.ns.get(i);
+    int x_start=w/layerNodes.length/2;
+    for(int j=0;j<layerNodes.length;j++)
+    {
+      ellipse(x+j*w/layerNodes.length+x_start, y+i*h/layerNum, 5, 5);
+    }
+  }
+  
+  
+}
+
 
 int TrainCount=0;
 void draw() {
@@ -427,12 +469,12 @@ void draw() {
   }
   
   
-  
   stroke(100);
   for (int i = 1; i < InX.length; i ++) {
     line(InX[i-1]*width/0.5,-OuY[i-1]*100+hH,InX[i]*width/0.5,-OuY[i]*100+hH);
   }
   
+  drawNN(nn,10,10,550,350);
   System.out.printf("ERR:%1.5f C:%05d\n",err,TrainCount);
   if(err>-0.005)noLoop();
 }
