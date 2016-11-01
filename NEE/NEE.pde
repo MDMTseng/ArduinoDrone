@@ -88,8 +88,8 @@ class s_neuron_net{
   ArrayList <s_neuron[]> ns;
   s_neuron ones[]=new s_neuron[3];
   s_neuron input[] =new s_neuron[1];
-  s_neuron hidden[] =new s_neuron[5];
-  public s_neuron hidden2[] =new s_neuron[5];
+  s_neuron hidden[] =new s_neuron[7];
+  public s_neuron hidden2[] =new s_neuron[7];
   public s_neuron output[] =new s_neuron[1];
   
   float XRand()
@@ -177,7 +177,7 @@ class s_neuron_net{
     for(int i=0;i<PErr.length;i++)PErr[i]=0;
     
     float lRate;
-    float limit = 5/layer[0].pre_neuron_L;
+    float limit = 10/layer[0].pre_neuron_L;
     for (int i=0;i<Error.length;i++) {
       float dPdZ = Error[i];
       
@@ -272,7 +272,7 @@ class s_neuron_net{
       int maxErrIdx=InX.length/2;
       for(int j=0;j<InX.length;j++)
       {
-        int idx=i;//(int)Math.floor(random(0,InX.length-0.0001));
+        int idx=j;//(int)Math.floor(random(0,InX.length-0.0001));
         input[0].latestVar=InX[idx];
         expectedOut[0]=OuY[idx];
         
@@ -365,7 +365,7 @@ class s_neuron_net{
 
 s_neuron_net nn = new s_neuron_net();
 
-float InX[]=new float[70];
+float InX[]=new float[50];
 float OuY[]=new float[InX.length];
   
 void setup() {
