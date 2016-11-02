@@ -201,8 +201,13 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =0.5;
+    float limit =0.8;
     float lRate=limit;
+    
+    
+    
+    float WAve =0;
+    
     for (int i=0;i<ErrorL;i++) {
       float dPdZ = Error[i];
       
@@ -224,9 +229,22 @@ class s_neuron_net{
           Buffer[j]+=dPdY*(layer[i].W[j])/BufferL;
         }
         layer[i].W[j]+=dPdY*dYdW*lRate;
-        
+        WAve+=layer[i].W[j];
       }
     }
+    WAve/=ErrorL*(layer[0].pre_neuron_L-1);
+    for (int i=0;i<ErrorL;i++) for (int j=0;j<layer[i].pre_neuron_L;j++)
+    {
+        float alphaX=0.0;
+        /*float valv=1;
+        if(layer[i].W[j]>valv)layer[i].W[j]=layer[i].W[j]*alphaX+valv*(1-alphaX);
+        else if(layer[i].W[j]<-valv)layer[i].W[j]=layer[i].W[j]*alphaX-valv*(1-alphaX);*/
+        layer[i].W[j]=(layer[i].W[j]-WAve);
+        
+        
+    }
+    
+    
     return BufferL;
   }
   
@@ -449,12 +467,6 @@ void setup() {
   background(255);
   //noLoop();
   
-  for(int i=0;i<InX.length;i++)
-  {
-    InX[i]=10.0*i/InX.length;
-    OuY[i]=(i>(InX.length/6)&&i<(InX.length*5/6))?(sin(InX[i]*InX[i]/5-TrainCount/2000.0))>0?1:0: 0;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
-  }
-  
   
 }
 
@@ -464,6 +476,12 @@ void draw() {
   background(0);
   int hH=height/2;
   
+  
+  for(int i=0;i<InX.length;i++)
+  {
+    InX[i]=10.0*i/InX.length;
+    OuY[i]=(i>(InX.length/6)&&i<(InX.length*5/6))?(sin(InX[i]*InX[i]/2-TrainCount/12000.0))*0.4+0.4: 0;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
+  }
   
   
   
@@ -510,6 +528,6 @@ void draw() {
   
   drawNN(nn,10,10,550,350);
   System.out.printf("ERR:%1.5f C:%05d\n",err,TrainCount);
-  if(err>-0.005)noLoop();
+  //if(err>-0.005)noLoop();
   //noLoop();
 }
