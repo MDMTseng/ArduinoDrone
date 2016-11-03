@@ -100,7 +100,7 @@ class s_neuron{
   public double d_exciteF(double sigmoid_var) {
     
     double slop=sigmoid_var*(1-(sigmoid_var));
-    return slop;
+    return slop+0.1;
   }
 }
 
@@ -220,7 +220,7 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =0.5;
+    float limit =7;
     float lRate=limit;
     
     
@@ -228,7 +228,7 @@ class s_neuron_net{
     float WAve =0;
     
     for (int i=0;i<ErrorL;i++) {
-      float dPdZ = Error[i];
+      float dPdZ = Error[i]/BufferL;
       
      /* lRate = dPdZ*limit;
       if(lRate<0)lRate=-lRate;
@@ -245,7 +245,7 @@ class s_neuron_net{
         
         if(j!=layer[i].pre_neuron_L-1)
         {
-          Buffer[j]+=dPdY*(layer[i].W[j])/BufferL;
+          Buffer[j]+=dPdY*(layer[i].W[j]);
           WAve+=layer[i].W[j];
         }
         layer[i].W[j]+=dPdY*dYdW*lRate;
