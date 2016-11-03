@@ -1,5 +1,6 @@
 
 class s_neuron{
+  public float SumVar;
   public float latestVar;
   
   
@@ -69,11 +70,12 @@ class s_neuron{
   {
     if(pre_neuron_L == 0)return;
     latestVar = 0;
+    SumVar = 0;
     for(int i=0;i<pre_neuron_L;i++)
     {
-      latestVar+=pre_neuron_list[i].latestVar*W[i];
+      SumVar+=pre_neuron_list[i].latestVar*W[i];
     }
-    latestVar=(float)exciteF(latestVar);
+    latestVar=(float)exciteF(SumVar);
   }
   protected void add_post_neuron(s_neuron post_neuron)
   {
@@ -92,12 +94,11 @@ class s_neuron{
     post_neuron_L++;
   }
   public double exciteF(double x) {
-    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
+    return (1/( 1 + Math.pow(Math.E,(-1*x))));
   }
   
   public double d_exciteF(double sigmoid_var) {
     
-    sigmoid_var=(sigmoid_var+1)/2;
     double slop=sigmoid_var*(1-(sigmoid_var));
     return slop;
   }
@@ -501,16 +502,9 @@ void draw() {
   for(int i=0;i<InX.length;i++)
   {
     InX[i]=XRange*i/InX.length;//random(0,10);
-    float Y=(i>(InX.length/6)&&i<(InX.length*5/6))?sin(InX[i]*InX[i]*30/(XRange*XRange)+TrainCount/220000.0)*0.8:-1;
-    float absY=Y>0?Y:-Y;
-    if(absY<0.0001)
-    {
-      InX[i]=Float.NEGATIVE_INFINITY;
-      //i--;
-      continue;
-    }
-    OuY[0][i]=Y;//*0.4+0.45;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
-    OuY[1][i]=sin(InX[i]*InX[i]*20/(XRange*XRange))*0.8;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
+
+    OuY[0][i]=sin(InX[i]*InX[i]*30/(XRange*XRange)-TrainCount/10000.0)*0.4+0.5;//*0.4+0.45;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
+    OuY[1][i]=sin(InX[i]*InX[i]*10/(XRange*XRange)+TrainCount/32000.0)*0.4+0.5;//(i>(InX.length/5)&&i<(InX.length*4/5))?(InX[i]-0.2)*4: 0;
   }
   
   
@@ -546,8 +540,8 @@ void draw() {
     }
     
     stroke(250);
-    tmp=nn.output[0].latestVar*100;
-    tmp2=nn.output[1].latestVar*100;
+    tmp=nn.output[0].latestVar*200;
+    tmp2=nn.output[1].latestVar*200;
     line(preVar+hW,preVar2+hH,tmp+hW,tmp2+hH);
     preVar=tmp;
     preVar2=tmp2;
@@ -555,12 +549,15 @@ void draw() {
   
   
   stroke(100);
-  for (int i = 0; i < InX.length; i ++) {
+  for (int i = 1; i < InX.length; i ++) {
     //line(InX[i-1]*width/10,-OuY[i-1]*100+hH,InX[i]*width/10,-OuY[i]*100+hH);
     
+    stroke(128,128,150,100);
     /*for (int j = 0; j < OuY.length; j ++) 
       ellipse(InX[i]*width/XRange+5,-OuY[j][i]*100+hH, 5, 5);*/
-    ellipse(OuY[0][i]*100+hW,OuY[1][i]*100+hH, 5, 5);  
+    line(
+    OuY[0][i]*200+hW,OuY[1][i]*200+hH,
+    OuY[0][i-1]*200+hW,OuY[1][i-1]*200+hH);  
   }
   
   drawNN(nn,10,10,550,350);
