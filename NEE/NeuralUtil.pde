@@ -142,24 +142,22 @@ class s_neuron{
     post_neuron_L++;
   }
   public double exciteF(double x) {
-    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
+    return (1/( 1 + Math.pow(Math.E,(-1*x))));
   }
   
   public double d_exciteF(double sigmoid_var) {
-    sigmoid_var=(sigmoid_var+1)/2;
-    double slop=2*sigmoid_var*(1-(sigmoid_var));
-    return (slop+0.2)/1.1;
+    //sigmoid_var=(sigmoid_var+1)/2;
+    double slop=sigmoid_var*(1-(sigmoid_var));
+    return (slop+0.02)/1.02;
   }
 }
 
 class s_neuron_net{
   ArrayList <s_neuron[]> ns;
-  s_neuron ones[]=new s_neuron[4];
-  s_neuron input[] =new s_neuron[1];
-  s_neuron hidden[] =new s_neuron[3];
-  public s_neuron hidden2[] =new s_neuron[12];
-  public s_neuron hidden3[] =new s_neuron[12];
-  public s_neuron output[] =new s_neuron[2];
+  s_neuron ones[];
+  s_neuron input[];
+  s_neuron hidden[][];
+  s_neuron output[];
   
   float XRand(float x1,float x2)
   {
@@ -168,89 +166,77 @@ class s_neuron_net{
   }
   s_neuron_net(int netDim[])
   {
-    
-  }
-  s_neuron_net()
-  {
-    
-    for(int i=0;i<ones.length;i++)
-    {
-      ones[i] = new s_neuron(1);
-      ones[i].latestVar = 1;
-    }
-    
-    
-    
+    if(netDim.length<2)
+      return;
+    ones =  new s_neuron[netDim.length-1]; 
     ns = new ArrayList <s_neuron[]>();
     
-    for(int i=0;i<input.length;i++)
-    {
-      input[i] = new s_neuron(1);
-      input[i].latestVar = 1;
-    }
-    ns.add(input);
     
-    s_neuron prelayer[]=input;
-    s_neuron currentlayer[]=hidden;
-    
-    
+    hidden=new s_neuron[netDim.length-2][];
+    input=new s_neuron[netDim[0]];
+    s_neuron prelayer[]=null;
+    s_neuron currentlayer[]=input;
     for(int i=0;i<currentlayer.length;i++)
     {
       currentlayer[i] = new s_neuron(1);
-      for(int j=0;j<prelayer.length;j++)
-      {
-        currentlayer[i].add_pre_neuron(prelayer[j],XRand(0,0.5)*2);
-      }
-      currentlayer[i].add_pre_neuron(ones[0],XRand(0,0.5)*2);
     }
     ns.add(currentlayer);
     
-    
-    prelayer=hidden;
-    currentlayer=hidden2;
-    for(int i=0;i<currentlayer.length;i++)
+    for(int i=1;i<netDim.length;i++)
     {
-      currentlayer[i] = new s_neuron(1);
-      for(int j=0;j<prelayer.length;j++)
+      prelayer=currentlayer;
+      currentlayer=new s_neuron[netDim[i]];
+      
+      ones[i-1]=new s_neuron(1);
+      ones[i-1].latestVar=1;
+      
+      for(int j=0;j<currentlayer.length;j++)
       {
-        currentlayer[i].add_pre_neuron(prelayer[j],XRand(0,0.5)*2);
+        currentlayer[j] = new s_neuron(1);
+        for(int k=0;k<prelayer.length;k++)
+        {
+          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
+        }
+        currentlayer[j].add_pre_neuron(ones[i-1] ,XRand(0,0.5)*2);
       }
-      currentlayer[i].add_pre_neuron(ones[1],XRand(0,0.5));
+      ns.add(currentlayer);
     }
-    ns.add(currentlayer);
     
-    
-    
-    prelayer=hidden2;
-    currentlayer=hidden3;
-    for(int i=0;i<hidden3.length;i++)
+    for(int i=1;i<ns.size()-1;i++)
     {
-      currentlayer[i] = new s_neuron(1);
-      for(int j=0;j<prelayer.length;j++)
-      {
-        currentlayer[i].add_pre_neuron(prelayer[j],XRand(0,0.5)*2);
-      }
-      currentlayer[i].add_pre_neuron(ones[2],XRand(0,0.5));
+      hidden[i-1]=ns.get(i);
     }
-    ns.add(currentlayer);
     
     
-    
-    prelayer=hidden3;
-    currentlayer=output;
-    for(int i=0;i<output.length;i++)
-    {
-      currentlayer[i] = new s_neuron(1);
-      for(int j=0;j<prelayer.length;j++)
-      {
-        currentlayer[i].add_pre_neuron(prelayer[j],XRand(0,0.5)*2);
-      }
-      currentlayer[i].add_pre_neuron(ones[3],XRand(0,0.5));
-    }
-    ns.add(currentlayer);
+    output=ns.get(ns.size()-1);
     
   }
-  void TrimSimNode(s_neuron layer[])
+  
+  void ContrastSimNode(s_neuron layer[],float CosSimValve,float alpha)
+  {
+    
+    if(layer[0].pre_neuron_L>2)
+    for (int i=0;i<layer.length;i++)
+    {
+      for (int j=i+1;j<layer.length;j++) 
+      {
+        float CosSim=layer[i].CosSimilarW(layer[j]);
+        if(CosSim>CosSimValve)
+        {
+          System.out.printf("CCC:%f...\n ",CosSim);
+          for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
+          {
+            float tmp = layer[j].W[k];
+            layer[j].W[k]=tmp*alpha+layer[i].W[k]*(1-alpha);
+            layer[i].W[k]=layer[i].W[k]*alpha+tmp*(1-alpha);
+          }
+        }
+      }
+        
+    }
+    
+  }
+  void TrimSimNode(s_neuron layer[],float CosSimValve)
   {
     
     if(layer[0].pre_neuron_L>2)
@@ -262,7 +248,7 @@ class s_neuron_net{
         //if(layer[j].rmsW()<1)continue;
         float CosSim=layer[i].CosSimilarW(layer[j]);
         float xSim=CosSim;
-        xSim=(xSim-0.92)/(1-0.92);
+        xSim=(xSim-CosSimValve)/(1-CosSimValve);
         xSim=(xSim>0)?xSim:0;
         float absCos = xSim>0?xSim:-xSim;
         xSim=(float)Math.pow(absCos,1);
@@ -274,7 +260,7 @@ class s_neuron_net{
           {
             System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
             layer[j].W[k]=(layer[i].W[k]+layer[j].W[k])/2;
-            layer[i].W[k]= XRand(0,0.5);
+            layer[i].W[k]= XRand(0,0.5)/5;
           }
           System.out.printf("\n ");
           
@@ -289,8 +275,8 @@ class s_neuron_net{
               else if(layer[i]==pnode.pre_neuron_list[m])
                 n2_idx = m;
             }
-            pnode.W[n1_idx]+=(CosSim>0)?pnode.W[n2_idx]:-pnode.W[n2_idx];
-            pnode.W[n2_idx]=XRand(0,0.5);
+            pnode.W[n1_idx]+=pnode.W[n2_idx];
+            pnode.W[n2_idx]=XRand(0,0.5)/5;
           }
         }
       }
@@ -313,8 +299,8 @@ class s_neuron_net{
         //if(layer[j].rmsW()<1)continue;
         float CosSim=layer[i].CosSimilarW(layer[j]);
         float xSim=CosSim;
-        xSim=(xSim-0.88)/(1-0.88);
         xSim=(xSim>0)?xSim:0;
+        xSim=(xSim-0.88)/(1-0.88);
         //float absCos = cosSim>0?cosSim:-cosSim;
         xSim=(float)Math.pow(xSim,1);
         float rand=random(0,1);
@@ -370,7 +356,7 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =0.03;
+    float limit =0.3;
     float lRate=limit;
     
     
@@ -381,7 +367,7 @@ class s_neuron_net{
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
-          float alphaX=0.999995;
+          float alphaX=0.9999995;
           layer[i].W[j]=(layer[i].W[j]*alphaX-WAve*(1-alphaX));//+random(-0.001,0.001);
           //layer[i].W[j]*=alphaX;
           
@@ -449,10 +435,6 @@ class s_neuron_net{
       ErrorL=TmpBufL;
       
     }
-    for (int i=this.ns.size()-2;i!=0;i--)
-    {
-      TrimSimNode(this.ns.get(i));
-    }
     
   }
   
@@ -511,11 +493,17 @@ class s_neuron_net{
   float TestTrain(float InX[],float OuY[][],int iter)
   {
      // RandomDropOut(0.003);
-    float maxErr=0;
+    float aveErr=0;
+    float aveErrC=0;
     float expectedOut[]=new float[output.length];
+    //RandomDropOut(0.0001);
+    for (int i=this.ns.size()-2;i!=0;i--)
+    {
+      ContrastSimNode(this.ns.get(i),0.7,0.99);
+      TrimSimNode(this.ns.get(i),0.98);
+    }
     for(int i=0;i<iter;i++)
     {
-      maxErr=0;
       int maxErrIdx=InX.length/2;
       for(int j=InX.length-1;j!=0;j--)
       {
@@ -528,17 +516,15 @@ class s_neuron_net{
         this.calc();
         
         float ErrorPow=-calcError(expectedOut);
-        if(ErrorPow>maxErr){
-          maxErr=ErrorPow;
-          maxErrIdx = idx;
-        }
+        aveErr+=ErrorPow;
+        aveErrC++;
         //System.out.printf("------Error:%f\n",ErrorPow);*/
         Train_S(expectedOut);
       }
      
     }
     
-    return -maxErr;
+    return aveErr/aveErrC;
   }
   void SetCalcNeuronInputData(float x)
   {
@@ -558,7 +544,7 @@ class s_neuron_net{
   }
   
   
-  void printStruct()
+ /* void printStruct()
   {
     System.out.printf("\ninput::\n");
     for(int i=0;i<input.length;i++)
@@ -581,6 +567,6 @@ class s_neuron_net{
       System.out.printf("[%2d]:%f ",i,output[i].latestVar);
     }
     System.out.printf("\n");
-  }
+  }*/
   
 }
