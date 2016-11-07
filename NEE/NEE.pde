@@ -1,5 +1,5 @@
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,10,10,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,2});
 
   
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)

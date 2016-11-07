@@ -256,7 +256,8 @@ class s_neuron_net{
         float CosSim=layer[i].CosSimilarW(layer[j]);
         if(CosSim>CosSimValve)
         {
-          float attractAlpha=1-(1-alpha)*pow((CosSim-CosSimValve)*(1-CosSimValve),1.2);
+          CosSim=(CosSim-CosSimValve)*(1-CosSimValve);
+          float attractAlpha=1-(1-alpha)*CosSim*CosSim;
           
           System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
@@ -341,13 +342,13 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =0.3;
+    float limit =0.1;
     float lRate=limit;
     
     
     float WAve =0;
     
-    /*for (int i=0;i<ErrorL;i++) 
+    for (int i=0;i<ErrorL;i++) 
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
@@ -356,7 +357,7 @@ class s_neuron_net{
           //layer[i].W[j]*=alphaX;
           
       }
-    }*/
+    }
     for (int i=0;i<ErrorL;i++) {
       float dPdZ = Error[i];
       
@@ -384,14 +385,16 @@ class s_neuron_net{
         {
           layer[i].W[j]+=lRate*dX/sqrt(layer[i].ADss[j]);
           
-          float alpha=0.99999;
-          
-          
-          //if(dX*dX>0.005)
           if(dX<0)dX=-dX;
           if(dX>1)dX=1;
-          dX=sqrt(dX)*0.00001;
+          dX=dX-1;
+          dX=dX*dX;
+          dX=(1-dX)*0.000001;
           layer[i].ADss[j]*=1-dX;
+        }
+        else
+        {
+          layer[i].W[j]+=lRate;
         }
       }
     }
