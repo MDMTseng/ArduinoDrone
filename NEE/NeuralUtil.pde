@@ -158,12 +158,14 @@ class s_neuron{
   }
   public double exciteF(double x) {
     return (1/( 1 + Math.pow(Math.E,(-1*x))));
+    //return (x>0)?0.5*x:0.01*x;
   }
   
   public double d_exciteF(double sigmoid_var) {
     //sigmoid_var=(sigmoid_var+1)/2;
     double slop=sigmoid_var*(1-(sigmoid_var));
-    return (slop+0.02)/1.02;
+    return (slop+0.001)/1.001;
+    
   }
 }
 
@@ -256,7 +258,7 @@ class s_neuron_net{
         {
           float attractAlpha=1-(1-alpha)*pow((CosSim-CosSimValve)*(1-CosSimValve),1.2);
           
-          System.out.printf("CCC:%f...\n ",CosSim);
+          System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
             float tmp = layer[j].W[k];
@@ -339,13 +341,13 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =1;
+    float limit =0.3;
     float lRate=limit;
     
     
     float WAve =0;
     
-    for (int i=0;i<ErrorL;i++) 
+    /*for (int i=0;i<ErrorL;i++) 
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
@@ -354,7 +356,7 @@ class s_neuron_net{
           //layer[i].W[j]*=alphaX;
           
       }
-    }
+    }*/
     for (int i=0;i<ErrorL;i++) {
       float dPdZ = Error[i];
       
@@ -373,7 +375,7 @@ class s_neuron_net{
         
         if(j!=layer[i].pre_neuron_L-1)
         {
-          Buffer[j]+=dPdY*(layer[i].W[j]);
+          Buffer[j]+=dPdY*(layer[i].W[j])/sqrt(ErrorL-1);
           WAve+=layer[i].W[j];
         }
         float dX=dPdY*dYdW;
@@ -382,15 +384,14 @@ class s_neuron_net{
         {
           layer[i].W[j]+=lRate*dX/sqrt(layer[i].ADss[j]);
           
-          float alpha=0.999999;
-          layer[i].ADss[j]=alpha*layer[i].ADss[j]*alpha+(lRate)*(1-alpha);
+          float alpha=0.99999;
+          
           
           //if(dX*dX>0.005)
-          /*if(dX<0)dX=-dX;
-          dX*=3;
+          if(dX<0)dX=-dX;
           if(dX>1)dX=1;
-          dX=pow(dX,0.5)*0.00001;
-          layer[i].ADss[j]*=1-dX;*/
+          dX=sqrt(dX)*0.00001;
+          layer[i].ADss[j]*=1-dX;
         }
       }
     }
@@ -511,10 +512,10 @@ class s_neuron_net{
     float aveErr=0;
     float aveErrC=0;
     float expectedOut[]=new float[output.length];
-    //RandomDropOut(0.0001);
+    //RandomDropOut(0.001);
     for (int i=this.ns.size()-2;i!=0;i--)
     {
-      ContrastSimNode(this.ns.get(i),0.80,0.50);
+      ContrastSimNode(this.ns.get(i),0.80,0.80);
       TrimSimNode(this.ns.get(i),0.995);
       
       NeuronNodeRevive(this.ns.get(i),0.9);

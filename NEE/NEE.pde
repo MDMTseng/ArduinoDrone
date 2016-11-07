@@ -1,5 +1,5 @@
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10 ,10,8,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,10,10,2});
 
   
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
@@ -225,7 +225,7 @@ void keyPressed() {
 }
 
 int TrainCount=0;
-float scrollingCount=-7;
+float scrollingCount=-0.2;
 
 void draw()
 {
@@ -254,7 +254,7 @@ void X2(){
   if(CCC%1==0)
     InXOuYSetUp1(scrollingCount,InX,OuY);
   CCC++;
-  //InXOuYAddNoise(InX,OuY,0.005);
+  InXOuYAddNoise(InX,OuY,0.005);
   /*for(int i=0;i<InX[0].length;i++)
   {
     if(OuY[0][i]==1)
@@ -328,11 +328,11 @@ void X2(){
   
   
   float err=nn.TestTrain(InX,OuY,25);
-  stroke(0,255,0,50);
+  stroke(0,255,0,100);
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
-  stroke(128,128,0,50);
+  stroke(128,128,0,100);
   
-  if(1.0*successCount/InX[0].length>0.95)
+  //if(1.0*successCount/InX[0].length>0.95)
     scrollingCount+=scrollingSpeed;
   SRateHist.Draw(100.0*successCount/InX[0].length,0,700,width,100);
   TrainCount+=25;
