@@ -1,5 +1,5 @@
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,6 ,8,8,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10 ,10,8,2});
 
   
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
@@ -120,7 +120,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   for(int i=0;i<InX[0].length/2;i++)
   {
       float x,y;
-      float t=(InX[0].length/2-i+1)*1.0/InX[0].length;
+      float t=(InX[0].length/2-i+5)*1.0/InX[0].length;
       x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t+0.5;
       y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t+0.5;
       InX[0][i]=x;
@@ -133,7 +133,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   for(int i=InX[0].length/2;i<InX[0].length;i++)
   {
       float x,y;
-      float t=(i-InX[0].length/2)*1.0/InX[0].length;
+      float t=(5+i-InX[0].length/2)*1.0/InX[0].length;
       x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t+0.5;
       y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t+0.5;
       InX[0][i]=x;
@@ -229,7 +229,6 @@ float scrollingCount=-7;
 
 void draw()
 {
-  scrollingCount+=scrollingSpeed;
   strokeWeight(3);
   background(0);
 
@@ -320,10 +319,10 @@ void X2(){
     }
     ellipse((InX[0][i]-0.5)*2*200+hW,(InX[1][i]-0.5)*2*200+hH+DrawYAdj, 8, 8);
     
-    stroke(255,255,128,50);
-    DFDOut0.Draw(nn.output[0].latestVar*200,i,InX[0].length,0,300,width,300);
-    stroke(255,128,255,50);
-    DFDOut1.Draw(nn.output[1].latestVar*200,i,InX[0].length,0,300,width,300);
+    //stroke(255,255,128,50);
+    //DFDOut0.Draw(nn.output[0].latestVar*200,i,InX[0].length,0,300,width,300);
+    //stroke(255,128,255,50);
+    //DFDOut1.Draw(nn.output[0].latestVar/(nn.output[1].latestVar+nn.output[0].latestVar)*200,i,InX[0].length,0,300,width,300);
     
   }
   
@@ -332,6 +331,9 @@ void X2(){
   stroke(0,255,0,50);
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
   stroke(128,128,0,50);
+  
+  if(1.0*successCount/InX[0].length>0.95)
+    scrollingCount+=scrollingSpeed;
   SRateHist.Draw(100.0*successCount/InX[0].length,0,700,width,100);
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);

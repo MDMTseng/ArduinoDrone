@@ -288,8 +288,8 @@ class s_neuron_net{
             System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
             layer[j].W[k]=(layer[i].W[k]+layer[j].W[k])/2;
             layer[j].ADss[k]=(layer[j].ADss[k]+layer[i].ADss[k])/2;
-            layer[i].W[k]= XRand(0,0.5);
-            layer[i].ADss[k]=0;
+            layer[i].W[k]= XRand(0,0.5)/2;
+            //layer[i].ADss[k]=0;
           }
           System.out.printf("\n ");
           
@@ -306,7 +306,7 @@ class s_neuron_net{
             }
             pnode.W[n1_idx]+=pnode.W[n2_idx];
             pnode.W[n2_idx]=0;
-            pnode.ADss[n2_idx]=100;
+            pnode.ADss[n2_idx]=5;
           }
           break;
         }
@@ -373,7 +373,7 @@ class s_neuron_net{
         
         if(j!=layer[i].pre_neuron_L-1)
         {
-          Buffer[j]+=dPdY*(layer[i].W[j])/ErrorL;
+          Buffer[j]+=dPdY*(layer[i].W[j]);
           WAve+=layer[i].W[j];
         }
         float dX=dPdY*dYdW;
@@ -381,11 +381,16 @@ class s_neuron_net{
         if(layer[i].ADss[j]!=0)
         {
           layer[i].W[j]+=lRate*dX/sqrt(layer[i].ADss[j]);
+          
+          float alpha=0.999999;
+          layer[i].ADss[j]=alpha*layer[i].ADss[j]*alpha+(lRate)*(1-alpha);
+          
           //if(dX*dX>0.005)
-          if(dX<0)dX=-dX;
+          /*if(dX<0)dX=-dX;
+          dX*=3;
           if(dX>1)dX=1;
-          dX=pow(dX,05)*0.0001;
-          layer[i].ADss[j]*=1-dX;
+          dX=pow(dX,0.5)*0.00001;
+          layer[i].ADss[j]*=1-dX;*/
         }
       }
     }
