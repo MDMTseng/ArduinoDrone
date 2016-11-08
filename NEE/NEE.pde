@@ -1,5 +1,5 @@
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,5,5,5,2});
 
   
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
@@ -144,7 +144,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   }
   
   
-  for(int i=0;i<0*InX[0].length;i++)
+  for(int i=0;i<InX[0].length;i++)
   {
     int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX[0].length);
     float tmp;
@@ -332,7 +332,7 @@ void X2(){
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
   stroke(128,128,0,100);
   
-  //if(1.0*successCount/InX[0].length>0.95)
+  if(1.0*successCount/InX[0].length>0.95)
     scrollingCount+=scrollingSpeed;
   SRateHist.Draw(100.0*successCount/InX[0].length,0,700,width,100);
   TrainCount+=25;

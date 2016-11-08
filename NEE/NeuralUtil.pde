@@ -244,7 +244,7 @@ class s_neuron_net{
     
   }
   
-  void ContrastSimNode(s_neuron layer[],float CosSimValve,float alpha)
+  void AttractSimNode(s_neuron layer[],float CosSimValve,float alpha)
   {
     
     if(layer[0].pre_neuron_L>2)
@@ -256,13 +256,13 @@ class s_neuron_net{
         float CosSim=layer[i].CosSimilarW(layer[j]);
         if(CosSim>CosSimValve)
         {
-          CosSim=(CosSim-CosSimValve)*(1-CosSimValve);
-          float attractAlpha=1-(1-alpha)*CosSim*CosSim;
+          float tmp=(CosSim-CosSimValve)*(1-CosSimValve);
+          float attractAlpha=1-(1-alpha)*tmp*tmp;
           
           System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
-            float tmp = layer[j].W[k];
+            tmp = layer[j].W[k];
             layer[j].W[k]=tmp*attractAlpha+layer[i].W[k]*(1-attractAlpha);
             layer[i].W[k]=layer[i].W[k]*attractAlpha+tmp*(1-attractAlpha);
           }
@@ -342,7 +342,7 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =0.1;
+    float limit =1;
     float lRate=limit;
     
     
@@ -376,20 +376,20 @@ class s_neuron_net{
         
         if(j!=layer[i].pre_neuron_L-1)
         {
-          Buffer[j]+=dPdY*(layer[i].W[j])/sqrt(ErrorL-1);
+          Buffer[j]+=dPdY*(layer[i].W[j])/(ErrorL-1);
           WAve+=layer[i].W[j];
         }
         float dX=dPdY*dYdW;
         layer[i].ADss[j]+=dX*dX;
-        if(layer[i].ADss[j]!=0)
+        float sqrtAdss=sqrt(layer[i].ADss[j]);
+        if(sqrtAdss!=0)
         {
-          layer[i].W[j]+=lRate*dX/sqrt(layer[i].ADss[j]);
-          
-          if(dX<0)dX=-dX;
+          layer[i].W[j]+=lRate*dX/sqrtAdss;
+          dX=sqrtAdss;
           if(dX>1)dX=1;
-          dX=dX-1;
-          dX=dX*dX;
-          dX=(1-dX)*0.000001;
+          //dX=1-dX;
+          //dX=dX*dX;
+          dX=dX*dX*dX*0.000001;
           layer[i].ADss[j]*=1-dX;
         }
         else
@@ -518,7 +518,7 @@ class s_neuron_net{
     //RandomDropOut(0.001);
     for (int i=this.ns.size()-2;i!=0;i--)
     {
-      ContrastSimNode(this.ns.get(i),0.80,0.80);
+      AttractSimNode(this.ns.get(i),0.80,0.80);
       TrimSimNode(this.ns.get(i),0.995);
       
       NeuronNodeRevive(this.ns.get(i),0.9);
