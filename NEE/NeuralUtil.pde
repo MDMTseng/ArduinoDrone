@@ -157,14 +157,14 @@ class s_neuron{
     post_neuron_L++;
   }
   public double exciteF(double x) {
-    return (1/( 1 + Math.pow(Math.E,(-1*x))));
+    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
     //return (x>0)?0.5*x:0.01*x;
   }
   
   public double d_exciteF(double sigmoid_var) {
-    //sigmoid_var=(sigmoid_var+1)/2;
-    double slop=sigmoid_var*(1-(sigmoid_var));
-    return (slop+0.001)/1.001;
+    sigmoid_var=(sigmoid_var+1)/2;
+    double slop=2*sigmoid_var*(1-(sigmoid_var));
+    return (slop+0.02)/1.01;
     
   }
 }
@@ -321,7 +321,7 @@ class s_neuron_net{
   
   
   //BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer);
-  int Train_1(s_neuron layer[],float Error[],int ErrorL,float Buffer[],boolean crossEn)
+  int Train_1(s_neuron layer[],float Error[],int ErrorL,float Buffer[],boolean crossEn,float learningRate)
   {
     //     Y=XW 
     // X -W--> |Sig| ->Z
@@ -342,13 +342,12 @@ class s_neuron_net{
     int BufferL=layer[0].pre_neuron_L-1;
     for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
-    float limit =1;
-    float lRate=limit;
+    float lRate=learningRate;
     
     
     float WAve =0;
     
-    for (int i=0;i<ErrorL;i++) 
+    /*for (int i=0;i<ErrorL;i++) 
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
@@ -357,7 +356,7 @@ class s_neuron_net{
           //layer[i].W[j]*=alphaX;
           
       }
-    }
+    }*/
     for (int i=0;i<ErrorL;i++) {
       float dPdZ = Error[i];
       
@@ -410,14 +409,14 @@ class s_neuron_net{
     float sum=0;
     for (int i=0;i<output.length;i++)
     {
-      sum+=output[i].latestVar;
+      sum+=(output[i].latestVar+1)/2;
       //float absErr=Error[i]>0?Error[i]:-Error[i];
       //Error[i]=(float)Math.exp(absErr*absErr*absErr)/5*(Error[i]>0?1:-1);
     }
     
     for (int i=0;i<output.length;i++)
     {
-      output[i].latestVar/=sum;
+      output[i].latestVar=((output[i].latestVar+1)/sum)-1;
       //float absErr=Error[i]>0?Error[i]:-Error[i];
       //Error[i]=(float)Math.exp(absErr*absErr*absErr)/5*(Error[i]>0?1:-1);
     }
@@ -442,7 +441,7 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false);
+      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,0.5);
       if(BufferL<=0)break;
       float TmpBuf[];
       TmpBuf=Buffer;

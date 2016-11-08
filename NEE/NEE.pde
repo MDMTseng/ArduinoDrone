@@ -1,5 +1,5 @@
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,5,5,5,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,3,3,33,3,3,2});
 
   
 void drawNN(s_neuron_net nnet,int x,int y,int w,int h)
@@ -121,8 +121,8 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   {
       float x,y;
       float t=(InX[0].length/2-i+5)*1.0/InX[0].length;
-      x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t+0.5;
-      y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t+0.5;
+      x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
+      y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
       InX[0][i]=x;
       InX[1][i]=y;
       
@@ -134,8 +134,8 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   {
       float x,y;
       float t=(5+i-InX[0].length/2)*1.0/InX[0].length;
-      x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t+0.5;
-      y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t+0.5;
+      x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t;
+      y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t;
       InX[0][i]=x;
       InX[1][i]=y;
       
@@ -144,7 +144,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   }
   
   
-  for(int i=0;i<InX[0].length;i++)
+  for(int i=0;i<0*InX[0].length;i++)
   {
     int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX[0].length);
     float tmp;
@@ -277,8 +277,8 @@ void X2(){
   int gridSize=20;
   for(int i=0;i<gridSize;i++)for(int j=0;j<gridSize;j++)
   {
-    nn.input[0].latestVar=1.0*j/gridSize;
-    nn.input[1].latestVar=1.0*i/gridSize;
+    nn.input[0].latestVar=1.0*j/gridSize-0.5;
+    nn.input[1].latestVar=1.0*i/gridSize-0.5;
     
     nn.calc();
     
@@ -292,7 +292,7 @@ void X2(){
       fill(255,0,128,20);
       stroke(255,0,128,20);
     }
-    ellipse((nn.input[0].latestVar-0.5)*2*200+hW,(nn.input[1].latestVar-0.5)*2*200+hH+DrawYAdj, 200/gridSize, 200/gridSize);
+    ellipse((nn.input[0].latestVar)*2*200+hW,(nn.input[1].latestVar)*2*200+hH+DrawYAdj, 200/gridSize, 200/gridSize);
     
     
   }
@@ -317,7 +317,7 @@ void X2(){
       fill(0,255,128,100);
       stroke(255,0,128,100);
     }
-    ellipse((InX[0][i]-0.5)*2*200+hW,(InX[1][i]-0.5)*2*200+hH+DrawYAdj, 8, 8);
+    ellipse((InX[0][i])*2*200+hW,(InX[1][i])*2*200+hH+DrawYAdj, 8, 8);
     
     //stroke(255,255,128,50);
     //DFDOut0.Draw(nn.output[0].latestVar*200,i,InX[0].length,0,300,width,300);
@@ -332,7 +332,7 @@ void X2(){
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
   stroke(128,128,0,100);
   
-  if(1.0*successCount/InX[0].length>0.95)
+  if(1.0*successCount/InX[0].length>0.80)
     scrollingCount+=scrollingSpeed;
   SRateHist.Draw(100.0*successCount/InX[0].length,0,700,width,100);
   TrainCount+=25;
