@@ -244,6 +244,26 @@ class s_neuron_net{
     
   }
   
+  
+  void NeuronNodePolarizing(s_neuron layer[],float maxW_threshold)
+  {
+    for (int i=0;i<layer.length;i++)
+    {
+      if(layer[i].rmsW_noDC()>maxW_threshold)continue;
+      
+      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++) 
+      {
+        float tmpX=layer[i].W[j];
+        if(tmpX<0)tmpX=-tmpX;
+        if(tmpX>maxW_threshold)
+          layer[i].W[j]*=random(1.0,1.1);
+        else
+          layer[i].W[j]/=random(1.0,1.1);
+      }
+    }
+    
+  }
+  
   void AttractSimNode(s_neuron layer[],float CosSimValve,float alpha)
   {
     
@@ -519,7 +539,7 @@ class s_neuron_net{
     {
       AttractSimNode(this.ns.get(i),0.80,0.80);
       TrimSimNode(this.ns.get(i),0.995);
-      
+      NeuronNodePolarizing(this.ns.get(i),0.9);
       NeuronNodeRevive(this.ns.get(i),0.9);
     }
     
