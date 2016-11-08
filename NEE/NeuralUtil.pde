@@ -430,7 +430,7 @@ class s_neuron_net{
     int ErrorL=0;
     float Buffer[] = new float[250];
     int BufferL=0;
-    softMax();
+   // softMax();
     ErrorL = output.length;
     for (int i=0;i<output.length;i++)
     {
@@ -441,7 +441,7 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,0.5);
+      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,0.1);
       if(BufferL<=0)break;
       float TmpBuf[];
       TmpBuf=Buffer;
