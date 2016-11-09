@@ -1,16 +1,18 @@
+mCreatureEnv env=new mCreatureEnv();
+mCreature cre = new mCreature();
 void setup() {
   size(640, 860);
   background(255);
   //noLoop();
-  
+  env.addCreature(cre);
 }
 NeuralTest nt = new NeuralTest();
 void draw()
 {
   strokeWeight(3);
   background(0);
-
-  nt.X2();
+  env.draWorld();
+  //nt.X2();
 }
 
 float scrollingSpeed=0.000;
