@@ -305,10 +305,10 @@ class s_neuron_net{
         float CosSim=layer[i].CosSimilarW(layer[j]);
         if(CosSim>CosSimValve)
         {
-          System.out.printf(">>>:%f...\n ",CosSim);
+          //System.out.printf(">>>:%f...\n ",CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
-            System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
+            //System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
             layer[j].W[k]=(layer[i].W[k]+layer[j].W[k])/2;
             layer[j].ADss[k]=(layer[j].ADss[k]+layer[i].ADss[k])/2;
             layer[i].W[k]= XRand(0,0.5)/2;

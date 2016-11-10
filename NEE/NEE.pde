@@ -1,14 +1,12 @@
 
 void setup() {
-  size(640, 860);
+  size(860, 860);
   background(255);
 }
 NeuralTest nt = new NeuralTest();
 NeuralC nc=new NeuralC();
 void draw()
 {
-  strokeWeight(3);
-  background(0);
   //nt.X2();
   nc.draw();
 }
