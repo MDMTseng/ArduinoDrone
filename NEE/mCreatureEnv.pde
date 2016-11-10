@@ -7,7 +7,7 @@ class mCreatureEnv{
   mCreatureEnv()
   {
     frameW=600;
-    frameH=600;
+    frameH=800;
     
   }
   boolean detectLineIntersecting(PVector a1,PVector a2,PVector b3,PVector b4,PVector ret_intersect)
@@ -46,24 +46,51 @@ class mCreatureEnv{
   {
     ret_normalExcced.mult(0);
     
+    float collideAmount=0;
+    PVector collideVec=new PVector();
+    
     if(cre.pos.x-cre.size/2<-frameW/2)
     {
-      ret_normalExcced.x=frameW/2+(cre.pos.x-cre.size/2);
+      collideVec.x=frameW/2+(cre.pos.x-cre.size/2);
     }
     else if(cre.pos.x+cre.size/2>frameW/2)
     {
-      ret_normalExcced.x=(cre.pos.x+cre.size/2)-frameW/2;
+      collideVec.x=(cre.pos.x+cre.size/2)-frameW/2;
     }
     
     if(cre.pos.y-cre.size/2<-frameH/2)
     {
-      ret_normalExcced.y=frameH/2+(cre.pos.y-cre.size/2);
+      collideVec.y=frameH/2+(cre.pos.y-cre.size/2);
     }
     else if(cre.pos.y+cre.size/2>frameH/2)
     {
-      ret_normalExcced.y=(cre.pos.y+cre.size/2)-frameH/2;
+      collideVec.y=(cre.pos.y+cre.size/2)-frameH/2;
     }
-    if(ret_normalExcced.x!=0||ret_normalExcced.y!=0)return true;
+    if(collideVec.x!=0||collideVec.y!=0)
+    {
+      collideAmount++;
+      ret_normalExcced.add(collideVec);
+      
+    }
+    for(mCreature xcre:mCre)
+    {
+      if(xcre==cre)continue;
+      collideVec.set(cre.pos);
+      
+      collideVec.sub(xcre.pos);
+      if(collideVec.mag()<(xcre.size+cre.size)/2)
+      {
+        collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.2);
+        collideAmount+=0.2;
+        ret_normalExcced.add(collideVec);
+      }
+    }
+    
+    if(collideAmount>0)
+    {
+      ret_normalExcced.div(1);
+      return true;
+    }
     
     return false;
   }
@@ -80,7 +107,20 @@ class mCreatureEnv{
     return 4;
     
   }
-  
+  boolean testBeamCreCollide(PVector position,float angle_rad,final mCreature cre,PVector ret_intersect)
+  {
+    /*PVector dX=new PVector(100*cos(angle_rad),100*sin(angle_rad));
+    float a=dX.x;
+    float b=dX.y;
+    float c=-position.y*a-position.x*b;
+    if()
+    */
+    PVector dX=new PVector();
+    dX.set(cre.pos);
+    dX.sub(position);
+    
+    return 3<cre.size/2;
+  }
   
   float testBeamCollide(PVector position,float angle_rad,PVector ret_intersect)
   {
@@ -181,8 +221,8 @@ class mCreatureEnv{
     PVector reflect = cre.pos.sub(normal.dot());*/
    // if(ret_normalExcced.x>0)
     cre.pos.sub(ret_normalExcced);
-    if(ret_normalExcced.x!=0)cre.speed.x=-cre.speed.x;
-    if(ret_normalExcced.y!=0)cre.speed.y=-cre.speed.y;
+    if(ret_normalExcced.x!=0)cre.speed.x+=-0.8*cre.speed.x;
+    if(ret_normalExcced.y!=0)cre.speed.y+=-0.8*cre.speed.y;
   }
   
   

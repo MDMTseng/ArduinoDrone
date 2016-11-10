@@ -279,7 +279,7 @@ class s_neuron_net{
           float tmp=(CosSim-CosSimValve)*(1-CosSimValve);
           float attractAlpha=1-(1-alpha)*tmp*tmp;
           
-          System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
+          //System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
             tmp = layer[j].W[k];
@@ -443,7 +443,7 @@ class s_neuron_net{
     
   }
   
-  void Train_S(float expected_output[])
+  void Train_S(float expected_output[],float lRate)
   {
     if(output.length!=expected_output.length)return;
     float Error[] = new float[250];
@@ -461,7 +461,7 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,0.1);
+      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,lRate);
       if(BufferL<=0)break;
       float TmpBuf[];
       TmpBuf=Buffer;
@@ -529,7 +529,7 @@ class s_neuron_net{
     }
   }
   
-  float TestTrain(float InX[][],float OuY[][],int iter)
+  float TestTrain(float InX[][],float OuY[][],int iter,float lRate)
   {
     float aveErr=0;
     float aveErrC=0;
@@ -563,7 +563,7 @@ class s_neuron_net{
         aveErr+=ErrorPow;
         aveErrC++;
         //System.out.printf("------Error:%f\n",ErrorPow);*/
-        Train_S(expectedOut);
+        Train_S(expectedOut,lRate);
       }
      
     }

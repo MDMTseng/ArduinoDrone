@@ -208,7 +208,7 @@ void X2(){
   }
   
   
-  float err=nn.TestTrain(InX,OuY,25);
+  float err=nn.TestTrain(InX,OuY,25,0.1);
   stroke(0,255,0,100);
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
   stroke(128,128,0,100);
@@ -238,7 +238,7 @@ void X1() {
   }
   
   
-  float err=nn.TestTrain(InX,OuY,55);
+  float err=nn.TestTrain(InX,OuY,55,0.1);
   stroke(0,255,0);
   ErrHist.Draw(err*5000,0,300,width,500);
   TrainCount+=55;

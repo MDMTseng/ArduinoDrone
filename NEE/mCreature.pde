@@ -2,10 +2,10 @@ class mCreature{
   
   float posX,posY;
   float speedX,speedY;
+  float mess;
   
   PVector pos=new PVector();
   PVector speed=new PVector();
-  float angle;
   float size;
   
   
@@ -37,8 +37,8 @@ class mCreature{
   
   class ConsciousCenter
   {
-    s_neuron_net nn = new s_neuron_net(new int[]{7,10,10,3,2});
-    float InX[][]=new float[nn.input.length][5];
+    s_neuron_net nn = new s_neuron_net(new int[]{7,8,7,2});
+    float InX[][]=new float[nn.input.length][15];
     float OuY[][]=new float[nn.output.length][InX[0].length];
     
     float energy;
@@ -60,7 +60,7 @@ class mCreature{
       
       InX[i++][InoutIdx]=in_hungryLevel;
       InX[i++][InoutIdx]=in_exhustedLevel;
-      
+      in_exhustedLevel/=1.01;
       for(int j=0;j<in_eyesBeam.length;j++)
       {
         InX[i++][InoutIdx]=in_eyesBeam[j];
@@ -79,13 +79,12 @@ class mCreature{
       
       ou_turnSpeed=OuY[0][InoutIdx];
       
-      rotation_speed(ou_turnSpeed*3.1/180);
+      //rotation_speed(ou_turnSpeed*3.1/180);
       ou_speedAdj=OuY[1][InoutIdx];
-      speed.mult(map(ou_speedAdj,1,-1,1.1,0.8));
       
     }
     
-    void StimulationTraining(float stimulationLevel)//+ for reward
+    void StimulationTraining(float stimulationLevel,int iter)//+ for reward
     {
       if(stimulationLevel>10)stimulationLevel=10;
       if(stimulationLevel<-10)stimulationLevel=-10;
@@ -95,27 +94,39 @@ class mCreature{
       float greX=0;
       if(stimulationLevel>0)
       {
-        greX=-OuY[0][InoutIdx]*0.7;
+        greX=0;
       }
       else
       {
-        greX=OuY[0][InoutIdx]+(OuY[0][InoutIdx]>0?0.2:-0.2);
+        in_exhustedLevel-=.1;
+        greX=OuY[0][InoutIdx]+(in_eyesBeam[4]>in_eyesBeam[0]?-2:2);
         
       }
       
       int rIdx=InoutIdx;
-      for(int i=InX[0].length-1;i>-1;i--)
+      for(int i=0;i<InX[0].length;i++)
       {
-          OuY[0][InoutIdx]=greX;
-          OuY[1][InoutIdx]+=stimulationLevel*10;
+          OuY[0][rIdx]=greX;
+
+
+          /*if(stimulationLevel<0&&speedAbs<1||
+          stimulationLevel>0&&speedAbs>3
+          )
+          {
+            
+            //println("OK...........");
+    
+          }
+          else*/
+          OuY[1][rIdx]+=stimulationLevel;
           
           
         
-        rIdx--;
-        if(rIdx<0)rIdx+=InX[0].length;
+          rIdx--;
+          if(rIdx<0)rIdx+=InX[0].length;
       }
       
-      float err=nn.TestTrain(InX,OuY,1);
+      float err=nn.TestTrain(InX,OuY,iter,0.05);
     }
   }
   
@@ -123,9 +134,11 @@ class mCreature{
   mCreature()
   {
     size=50;
-    pos.x=10;
-    speed.x=5;
-    speed.y=5;
+    mess=1;
+    pos.x=random(-100,100);
+    pos.y=random(-100,100);
+    speed.x=random(-10,10);
+    speed.y=random(-10,10);
     
   }
   
@@ -138,9 +151,14 @@ class mCreature{
     println("Hit");
     
     
-    float crashLevel=normalExcced.mag();
-    
-    CC.StimulationTraining(-crashLevel*10);
+    float crashLevel=normalExcced.mag()+2;
+    for(int i=0;i<CC.in_eyesBeam.length;i++)
+    {
+      
+      println("CC.in_eyesBeam["+i+"]="+CC.in_eyesBeam[i]);
+
+    }
+    CC.StimulationTraining(-crashLevel*3,5);
     
     
   }
@@ -156,40 +174,63 @@ class mCreature{
     speed.x=x;
     speed.y=y;
   }
-  
+  boolean guideGate=false;
+  HistDataDraw turnHist=new HistDataDraw(1500);
+  HistDataDraw speedHist=new HistDataDraw(1500);
+  float speedAbs;
   void update(mCreatureEnv env)
   {
     CC.in_hungryLevel=0;
-    CC.in_exhustedLevel=0;
     
-    float spreadAngle=5;
+    float spreadAngle=20;
     PVector ret_intersect=new PVector();
     float speedAngle=atan2(speed.y,speed.x)-spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
     
+    float minDist=Float.POSITIVE_INFINITY;
+    float maxDist=0;
     for(int i=0;i<CC.in_eyesBeam.length;i++)
     {
       
       float dist=env.testBeamCollide(pos,speedAngle+spreadAngle*PI/180*i, ret_intersect);
-      
-      CC.in_eyesBeam[i]=1/dist;
-      if(dist<1000)
-      {
-        ellipse(ret_intersect.x+300,-ret_intersect.y+300, 15, 15);
-        float d=(dist-200)/200;
-        if(d>1)d=1;
-        if(i==CC.in_eyesBeam.length/2&&random(0,1)>0.99)CC.StimulationTraining(d);
-      }
+      if(minDist>dist)minDist=dist;
+      if(maxDist<dist)maxDist=dist;
+      CC.in_eyesBeam[i]=10/dist;
+      ellipse(ret_intersect.x+env.frameW/2,-ret_intersect.y+env.frameH/2, 15, 15);
+
+    }
+   // minDist=(minDist+maxDist)/2;
+    if(!guideGate&&minDist>100)
+    {
+      float d=(minDist-100)/100;
+      if(d>2)d=2;
+      d*=4;
+      CC.StimulationTraining(d,1);
       
     }
-    
-    
+      
     CC.UpdateNeuronInput();
     
-    rotation_speed(CC.ou_turnSpeed*PI/180);
+    
+    
+    
+    rotation_speed(1*CC.ou_turnSpeed*PI/180);
+    
+    stroke(0,255,0,100);
+    turnHist.Draw(CC.ou_turnSpeed*10,0,300,width,500);
+    
+    speed.mult(map(CC.ou_speedAdj,1,-1,1.1,1/1.1));
     //speed.mult(CC.ou_speedAdj);
-    float speedAbs=speed.mag();
-    if(speedAbs>5)
-      speed.mult(0.8);
+    speedAbs=speed.mag();
+    
+    stroke(128,200,0,100);
+    speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
+    
+    
+    if(speedAbs>10)
+      speed.mult(0.9);
+    else if(speedAbs<0.1)
+      speed.mult(random(1.5,1.7));
+      
     
     
     pos.add(speed);
