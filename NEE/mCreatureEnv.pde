@@ -124,16 +124,25 @@ class mCreatureEnv{
     dX.mult(dot);
     dX.add(position);
    
-    float dist=Float.POSITIVE_INFINITY;
-    if(dX.dist(cre.pos)<cre.size*1)
+    float closestDist=dX.dist(cre.pos);
+    
+    
+    
+    
+    float r=cre.size*1;//x0.5
+    
+    
+    
+    if(closestDist<r)
     {
-      dist=position.dist(cre.pos);
+      closestDist=position.dist(cre.pos);
       ret_intersect.set(vec2dest);
-      ret_intersect.mult(dist);
+      ret_intersect.mult(closestDist);
       ret_intersect.add(position);
+      return closestDist;
     }
     
-    return dist;
+    return Float.POSITIVE_INFINITY;
   }
   
   float testBeamCollide(PVector position,float angle_rad,PVector ret_intersect)
@@ -252,8 +261,8 @@ class mCreatureEnv{
     PVector reflect = cre.pos.sub(normal.dot());*/
    // if(ret_normalExcced.x>0)
     cre.pos.sub(ret_normalExcced);
-    if(ret_normalExcced.x!=0)cre.speed.x+=-0.01*cre.speed.x;
-    if(ret_normalExcced.y!=0)cre.speed.y+=-0.01*cre.speed.y;
+    /*if(ret_normalExcced.x!=0)cre.speed.x+=-2*cre.speed.x;
+    if(ret_normalExcced.y!=0)cre.speed.y+=-2*cre.speed.y;*/
   }
   
   

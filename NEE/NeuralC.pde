@@ -37,7 +37,7 @@ class NeuralC{
   int simCount=1;
   boolean gatX=false;
   void draw(){
-    if(gatX)return;
+    if(gatX||simCount<=0)return;
     
     strokeWeight(3);
     background(0);
@@ -53,6 +53,9 @@ class NeuralC{
       env.simulate();
     }
     env.draWorld();
+    
+    cres[0].c=color(180,150,180);
+    drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
   }
   void keyPressed()

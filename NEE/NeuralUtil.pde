@@ -367,7 +367,7 @@ class s_neuron_net{
     
     float WAve =0;
     
-    /*for (int i=0;i<ErrorL;i++) 
+    for (int i=0;i<ErrorL;i++) 
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
@@ -376,7 +376,7 @@ class s_neuron_net{
           //layer[i].W[j]*=alphaX;
           
       }
-    }*/
+    }
     for (int i=0;i<ErrorL;i++) {
       float dPdZ = Error[i];
       
@@ -443,7 +443,7 @@ class s_neuron_net{
     
   }
   
-  void Train_S(float expected_output[],float lRate)
+  void Train_S(float expected_output[],float lRate,boolean crossEn)
   {
     if(output.length!=expected_output.length)return;
     float Error[] = new float[250];
@@ -461,7 +461,7 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,false,lRate);
+      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,crossEn&&(i==this.ns.size()-1),lRate);
       if(BufferL<=0)break;
       float TmpBuf[];
       TmpBuf=Buffer;
@@ -531,6 +531,11 @@ class s_neuron_net{
   
   float TestTrain(float InX[][],float OuY[][],int iter,float lRate)
   {
+    return TestTrain( InX, OuY, iter, lRate, false);
+  }
+  
+  float TestTrain(float InX[][],float OuY[][],int iter,float lRate,boolean crossEn)
+  {
     float aveErr=0;
     float aveErrC=0;
     float expectedOut[]=new float[output.length];
@@ -563,7 +568,7 @@ class s_neuron_net{
         aveErr+=ErrorPow;
         aveErrC++;
         //System.out.printf("------Error:%f\n",ErrorPow);*/
-        Train_S(expectedOut,lRate);
+        Train_S(expectedOut,lRate,crossEn);
       }
      
     }

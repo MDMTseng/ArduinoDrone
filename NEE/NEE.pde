@@ -7,6 +7,7 @@ NeuralTest nt = new NeuralTest();
 NeuralC nc=new NeuralC();
 void draw()
 {
+    background(0);
   //nt.X2();
   nc.draw();
 }
