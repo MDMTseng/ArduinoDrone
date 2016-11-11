@@ -4,10 +4,10 @@ class mCreatureEnv{
   
   float frameW,frameH;
   
-  mCreatureEnv()
+  mCreatureEnv(int env_width,int env_height)
   {
-    frameW=860;
-    frameH=860;
+    frameW=env_width;
+    frameH=env_height;
     
   }
   boolean detectLineIntersecting(PVector a1,PVector a2,PVector b3,PVector b4,PVector ret_intersect)
@@ -30,9 +30,9 @@ class mCreatureEnv{
     Float.isNaN(ret_intersect.x)||
     Float.isNaN(ret_intersect.y)||
     ret_intersect.x==Float.POSITIVE_INFINITY||
-    ret_intersect.x==-Float.NEGATIVE_INFINITY||
+    ret_intersect.x==Float.NEGATIVE_INFINITY||
     ret_intersect.y==Float.POSITIVE_INFINITY||
-    ret_intersect.y==-Float.NEGATIVE_INFINITY
+    ret_intersect.y==Float.NEGATIVE_INFINITY
     
     )return false;
     
@@ -125,7 +125,7 @@ class mCreatureEnv{
     dX.add(position);
    
     float dist=Float.POSITIVE_INFINITY;
-    if(dX.dist(cre.pos)<cre.size*2)
+    if(dX.dist(cre.pos)<cre.size*1)
     {
       dist=position.dist(cre.pos);
       ret_intersect.set(vec2dest);
