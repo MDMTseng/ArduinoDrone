@@ -545,7 +545,6 @@ class s_neuron_net{
         aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn);
       }
     }
-    System.out.printf("------Error:%f\n",aveErr);
     
     return aveErr/aveErrC;
   }
@@ -574,7 +573,6 @@ class s_neuron_net{
     {
       expectedOut[k]=OuY[k];
     }
-    
     this.calc();
     
     float ErrorPow=-calcError(expectedOut);

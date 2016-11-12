@@ -32,8 +32,8 @@ class mFixture{
     float ou_speedAdj;
     
     s_neuron_net nn = new s_neuron_net(new int[]{3+in_eyesBeam.length+inout_mem.length,8,8,2+inout_mem.length});
-    float InX[][]=new float[nn.input.length][10];
-    float OuY[][]=new float[nn.output.length][InX[0].length];
+    float InX[][]=new float[10][nn.input.length];
+    float OuY[][]=new float[InX.length][nn.output.length];
     
     float energy;
   
@@ -53,46 +53,46 @@ class mFixture{
       if(skipIdx==0)
       {
         InoutIdx++;
-        InoutIdx%=InX[0].length;
+        InoutIdx%=InX.length;
       }
       int i=0;
       
-      InX[i++][InoutIdx]=in_energy;
-      InX[i++][InoutIdx]=in_exhustedLevel;
-      InX[i++][InoutIdx]=in_currentSpeed;
+      InX[InoutIdx][i++]=in_energy;
+      InX[InoutIdx][i++]=in_exhustedLevel;
+      InX[InoutIdx][i++]=in_currentSpeed;
       in_exhustedLevel/=1.01;
       for(int j=0;j<in_eyesBeam.length;j++)
       {
-        InX[i++][InoutIdx]=in_eyesBeam[j];
+        InX[InoutIdx][i++]=in_eyesBeam[j];
       }
       
       
       for(int j=0;j<inout_mem.length;j++)
       {
-        InX[i++][InoutIdx]=inout_mem[j];
+        InX[InoutIdx][i++]=inout_mem[j];
       }
       
       
       
-      for(int j=0;j<InX.length;j++)
+      for(int j=0;j<InX[InoutIdx].length;j++)
       {
-        nn.input[j].latestVar=InX[j][InoutIdx];
+        nn.input[j].latestVar=InX[InoutIdx][j];
       }
       nn.calc();
       
-      for(int j=0;j<OuY.length;j++)
+      for(int j=0;j<OuY[InoutIdx].length;j++)
       {
-        OuY[j][InoutIdx]=nn.output[j].latestVar;
+        OuY[InoutIdx][j]=nn.output[j].latestVar;
       }
       i=0;
-      ou_turnSpeed=OuY[i++][InoutIdx];
+      ou_turnSpeed=OuY[InoutIdx][i++];
       
       //rotation_speed(ou_turnSpeed*3.1/180);
-      ou_speedAdj=OuY[i++][InoutIdx];
+      ou_speedAdj=OuY[InoutIdx][i++];
       
       for(int j=0;j<inout_mem.length;j++)
       {
-        inout_mem[j]=OuY[i++][InoutIdx];
+        inout_mem[j]=OuY[InoutIdx][i++];
       }
     }
     
@@ -124,7 +124,7 @@ class mFixture{
       int rIdx=InoutIdx;
       for(int i=0;i<InX[0].length;i++)
       {
-          OuY[0][rIdx]=OuY[0][rIdx]*(1-alpha)+(alpha)*(greX);
+          OuY[rIdx][0]=OuY[rIdx][0]*(1-alpha)+(alpha)*(greX);
             
 
           /*if(stimulationLevel<0&&speedAbs<1||
@@ -136,17 +136,17 @@ class mFixture{
     
           }
           else*/
-          OuY[1][rIdx]=OuY[1][rIdx]*(1-alpha)+(alpha)*stimulationLevel;
+          OuY[rIdx][1]=OuY[rIdx][1]*(1-alpha)+(alpha)*stimulationLevel;
           
           memAdj=1*(1-alpha)+(alpha)*memAdj;
           
           for(int j=0;j<inout_mem.length;j++)
           {
-            OuY[j+2][rIdx]*=memAdj;
+            OuY[rIdx][j+2]*=memAdj;
           }
           alpha/=1.5;
           rIdx--;
-          if(rIdx<0)rIdx+=InX[0].length;
+          if(rIdx<0)rIdx+=InX.length;
       }
       
       float lRate =(stimulationLevel)>0? 0.2:0.5;

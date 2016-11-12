@@ -1,10 +1,10 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,3,3,33,3,3,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,2});
 
   
 
-float InX[][]=new float[150][nn.input.length];
+float InX[][]=new float[110][nn.input.length];
 float OuY[][]=new float[InX.length][nn.output.length];
 Draw_s_neuron_net drawNN=new Draw_s_neuron_net();
 
@@ -19,20 +19,20 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   for(int i=0;i<InX.length/2;i++)
   {
       float x,y;
-      float t=(InX.length/2-i+5)*1.0/InX.length;
+      float t=(InX.length/2-i)*1.0/InX.length;
       x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
       y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
       InX[i][0]=x;
       InX[i][1]=y;
       
-      OuY[i][0]=0;
-      OuY[i][1]=1;
+      OuY[i][0]=1;
+      OuY[i][1]=0;
   }
   
   for(int i=InX.length/2;i<InX.length;i++)
   {
       float x,y;
-      float t=(5+i-InX.length/2)*1.0/InX.length;
+      float t=(i-InX.length/2)*1.0/InX.length;
       x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t;
       y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t;
       InX[i][0]=x;
@@ -76,12 +76,12 @@ void InXOuYAddNoise(float InX[][],float OuY[][],float Noise)
       
   }
 }
-float scrollingSpeed=0.000;
+float scrollingSpeed=0.0005;
 
 
 
 int TrainCount=0;
-float scrollingCount=-0.2;
+float scrollingCount=-0.0;
 
 
 HistDataDraw ErrHist=new HistDataDraw(1500);
@@ -105,7 +105,7 @@ void X2(){
   if(CCC%1==0)
     InXOuYSetUp1(scrollingCount,InX,OuY);
   CCC++;
-  InXOuYAddNoise(InX,OuY,0.005);
+  //InXOuYAddNoise(InX,OuY,0.005);
   
   
   drawNN.drawNN(nn,10,10,550,350);
@@ -113,13 +113,13 @@ void X2(){
   
   int DrawYAdj=150;
   
-  int gridSize=60;
+  int gridSize=20;
   for(int i=0;i<gridSize;i++)for(int j=0;j<gridSize;j++)
   {
     
     nn.input[0].latestVar=1.0*j/gridSize-0.5;
     nn.input[1].latestVar=1.0*i/gridSize-0.5;
-    float timesx=100;
+    float timesx=1;
     nn.input[0].latestVar*=timesx;
     nn.input[1].latestVar*=timesx;
     nn.calc();
@@ -164,14 +164,14 @@ void X2(){
     ellipse((InX[i][0])*2*200+hW,(InX[i][1])*2*200+hH+DrawYAdj, 8, 8);
     
     stroke(255,255,128,50);
-    DFDOut0.Draw(nn.output[0].latestVar*200,i,InX[0].length,0,300,width,300);
+    DFDOut0.Draw(nn.output[0].latestVar*200,i,InX.length,0,300,width,300);
     stroke(255,128,255,50);
-    DFDOut1.Draw(nn.output[0].latestVar/(nn.output[1].latestVar+nn.output[0].latestVar)*200,i,InX[0].length,0,300,width,300);
+    DFDOut1.Draw(nn.output[0].latestVar/(nn.output[1].latestVar+nn.output[0].latestVar)*200,i,InX.length,0,300,width,300);
     
   }
   
   nn.PreTrainProcess();
-  float err=nn.TestTrain(InX,OuY,1,0.001);
+  float err=nn.TestTrain(InX,OuY,25,0.5);
   stroke(0,255,0,100);
   ErrHist.Draw((float)Math.log(err+1)*1000,0,300,width,500);
   stroke(128,128,0,100);
