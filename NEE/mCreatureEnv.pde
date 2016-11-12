@@ -1,10 +1,10 @@
-class mCreatureEnv{
+class mFixtureEnv{
   
-  ArrayList <mCreature> mCre=new ArrayList <mCreature>();
+  ArrayList <mFixture> mCre=new ArrayList <mFixture>();
   
   float frameW,frameH;
   
-  mCreatureEnv(int env_width,int env_height)
+  mFixtureEnv(int env_width,int env_height)
   {
     frameW=env_width;
     frameH=env_height;
@@ -38,11 +38,11 @@ class mCreatureEnv{
     
     return true;
   }
-  void addCreature(mCreature cre)
+  void addCreature(mFixture cre)
   {
     mCre.add(cre);
   }
-  boolean testEnvCollide(final mCreature cre,PVector ret_normalExcced)
+  boolean testEnvCollide(final mFixture cre,PVector ret_normalExcced)
   {
     ret_normalExcced.mult(0);
     
@@ -72,7 +72,7 @@ class mCreatureEnv{
       ret_normalExcced.add(collideVec);
       
     }
-    for(mCreature xcre:mCre)
+    for(mFixture xcre:mCre)
     {
       if(xcre==cre)continue;
       collideVec.set(cre.pos);
@@ -80,7 +80,7 @@ class mCreatureEnv{
       collideVec.sub(xcre.pos);
       if(collideVec.mag()<(xcre.size+cre.size)/2)
       {
-        collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.2);
+        collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.5*0.2);
         collideAmount+=0.2;
         ret_normalExcced.add(collideVec);
       }
@@ -106,7 +106,7 @@ class mCreatureEnv{
     
   }
   
-  float testBeamCreCollide(  PVector position, PVector vec2dest, mCreature cre,PVector ret_intersect)
+  float testBeamCreCollide(  PVector position, PVector vec2dest, mFixture cre,PVector ret_intersect)
   {
     /*PVector dX=new PVector(100*cos(angle_rad),100*sin(angle_rad));
     float a=dX.x;
@@ -234,7 +234,7 @@ class mCreatureEnv{
       }
     }
     
-    for(mCreature cre:mCre)
+    for(mFixture cre:mCre)
     {
       if(cre.pos==position)continue;
       float dist=testBeamCreCollide(position,orientation,cre,intersect);
@@ -252,7 +252,7 @@ class mCreatureEnv{
     return minDist;
   }
   
-  void simulateCollide(mCreature cre,final PVector ret_normalExcced)
+  void simulateCollide(mFixture cre,final PVector ret_normalExcced)
   {
     /*PVector normal=new PVector(ret_normalExcced.x,ret_normalExcced.y,ret_normalExcced.z);
     normal.normalize();
@@ -260,9 +260,10 @@ class mCreatureEnv{
     
     PVector reflect = cre.pos.sub(normal.dot());*/
    // if(ret_normalExcced.x>0)
+    
     cre.pos.sub(ret_normalExcced);
-    /*if(ret_normalExcced.x!=0)cre.speed.x+=-2*cre.speed.x;
-    if(ret_normalExcced.y!=0)cre.speed.y+=-2*cre.speed.y;*/
+    //if(ret_normalExcced.x!=0)cre.speed.x+=-0.5*ret_normalExcced.x;
+    //if(ret_normalExcced.y!=0)cre.speed.y+=-0.5*ret_normalExcced.y;
   }
   
   
@@ -270,12 +271,12 @@ class mCreatureEnv{
   {
     PVector ret_normalExcced=new PVector(0,0,0);
     
-    for(mCreature cre:mCre)
+    for(mFixture cre:mCre)
     {
       cre.update(this);
     }
     
-    for(mCreature cre:mCre)
+    for(mFixture cre:mCre)
     {
       if(testEnvCollide(cre,ret_normalExcced))
       {
@@ -288,7 +289,7 @@ class mCreatureEnv{
   void draWorld()
   {
     
-    for(mCreature cre:mCre)
+    for(mFixture cre:mCre)
     {
       fill(cre.c);
       stroke(cre.c);

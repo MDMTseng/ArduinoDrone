@@ -7,9 +7,9 @@ NeuralTest nt = new NeuralTest();
 NeuralC nc=new NeuralC();
 void draw()
 {
-    background(0);
-  //nt.X2();
-  nc.draw();
+   
+  nt.X2();
+  //nc.draw();
 }
 
 float scrollingSpeed=0.000;

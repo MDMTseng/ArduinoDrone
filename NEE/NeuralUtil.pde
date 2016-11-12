@@ -503,7 +503,6 @@ class s_neuron_net{
     for (int i=0;i<expected_output.length;i++)
     {
       float tmp = expected_output[i] - output[i].latestVar;
-      //System.out.printf("%f,",tmp);
       out += tmp*tmp;
     }
     return -out/2;
@@ -529,93 +528,62 @@ class s_neuron_net{
     }
   }
   
-  float TestTrain(float InX[][],float OuY[][],int iter,float lRate)
+  float TestTrain(float InXSet[][],float OuYSet[][],int iter,float lRate)
   {
-    return TestTrain( InX, OuY, iter, lRate, false);
+    return TestTrain( InXSet, OuYSet, iter, lRate, false);
   }
   
-  float TestTrain(float InX[][],float OuY[][],int iter,float lRate,boolean crossEn)
+  float TestTrain(float InXSet[][],float OuYSet[][],int iter,float lRate,boolean crossEn)
   {
     float aveErr=0;
     float aveErrC=0;
-    float expectedOut[]=new float[output.length];
-    //RandomDropOut(0.001);
-    for (int i=this.ns.size()-2;i!=0;i--)
-    {
-      AttractSimNode(this.ns.get(i),0.80,0.80);
-      TrimSimNode(this.ns.get(i),0.995);
-      NeuronNodePolarizing(this.ns.get(i),0.9);
-      NeuronNodeRevive(this.ns.get(i),0.9);
-    }
-    
+
     for(int i=0;i<iter;i++)
     {
-      int maxErrIdx=InX.length/2;
-      for(int j=InX[0].length-1;j!=0;j--)
+      for(int j=0;j<InXSet.length;j++)
       {
-        int idx=j;
-        //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
-        
-        for(int k=0;k<InX.length;k++)
-          input[k].latestVar=InX[k][idx];
-        
-        for(int k=0;k<OuY.length;k++)
-          expectedOut[k]=OuY[k][idx];
-        
-        this.calc();
-        
-        float ErrorPow=-calcError(expectedOut);
-        aveErr+=ErrorPow;
-        aveErrC++;
-        //System.out.printf("------Error:%f\n",ErrorPow);*/
-        Train_S(expectedOut,lRate,crossEn);
+        aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn);
       }
-     
     }
+    System.out.printf("------Error:%f\n",aveErr);
     
     return aveErr/aveErrC;
   }
-  void SetCalcNeuronInputData(float x)
+  void PreTrainProcess()
   {
+    for (int i=this.ns.size()-2;i!=0;i--)
+    {
+      AttractSimNode(this.ns.get(i),0.80,0.50);
+      TrimSimNode(this.ns.get(i),0.95);
+      //NeuronNodePolarizing(this.ns.get(i),0.9);
+      NeuronNodeRevive(this.ns.get(i),0.9);
+    }
+  }
+  
+  float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn)
+  {
+    float expectedOut[]=new float[output.length];
+  
+    //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
     
-    input[0].latestVar=x;
+    for(int k=0;k<InX.length;k++)
+    {
+      input[k].latestVar=InX[k];
+    }
+    for(int k=0;k<OuY.length;k++)
+    {
+      expectedOut[k]=OuY[k];
+    }
     
     this.calc();
-  }
-  
-  void printOut()
-  {
-    for(int i=0;i<output.length;i++)
-    {
-      System.out.printf("[%2d]:%f ",i,output[i].latestVar);
-    }
-    System.out.printf("\n");
+    
+    float ErrorPow=-calcError(expectedOut);
+    Train_S(expectedOut,lRate,crossEn);
+    
+    return ErrorPow;
   }
   
   
- /* void printStruct()
-  {
-    System.out.printf("\ninput::\n");
-    for(int i=0;i<input.length;i++)
-    {
-      System.out.printf("[%2d]:%f  ",i,input[i].latestVar);
-    }
-    System.out.printf("\nhidden::\n");
-    for(int i=0;i<hidden.length;i++)
-    {
-      System.out.printf("[%2d]:%f ",i,hidden[i].latestVar);
-    }
-    System.out.printf("\nhidden2::\n");
-    for(int i=0;i<hidden2.length;i++)
-    {
-      System.out.printf("[%2d]:%f ",i,hidden2[i].latestVar);
-    }
-    System.out.printf("\noutput::\n");
-    for(int i=0;i<output.length;i++)
-    {
-      System.out.printf("[%2d]:%f ",i,output[i].latestVar);
-    }
-    System.out.printf("\n");
-  }*/
+  
   
 }
