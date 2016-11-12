@@ -138,12 +138,7 @@ class mFixture{
           else*/
           OuY[rIdx][1]=OuY[rIdx][1]*(1-alpha)+(alpha)*stimulationLevel;
           
-          memAdj=1*(1-alpha)+(alpha)*memAdj;
-          
-          for(int j=0;j<inout_mem.length;j++)
-          {
-            OuY[rIdx][j+2]*=memAdj;
-          }
+
           alpha/=1.5;
           rIdx--;
           if(rIdx<0)rIdx+=InX.length;
@@ -167,17 +162,17 @@ class mFixture{
       for(int i=0;i<InX[0].length;i++)
       {
           
-          OuY[0][rIdx]+=random(-alpha,alpha);
+          OuY[rIdx][0]+=random(-alpha,alpha);
 
-          OuY[1][rIdx]+=random(-alpha,alpha);
+          OuY[rIdx][1]+=random(-alpha,alpha);
           
           
           for(int j=0;j<inout_mem.length;j++)
           {
-            OuY[j+2][rIdx]+=random(-alpha,alpha);
+            OuY[rIdx][j+2]+=random(-alpha,alpha);
           }
           rIdx--;
-          if(rIdx<0)rIdx+=InX[0].length;
+          if(rIdx<0)rIdx+=InX.length;
       }
       
       
@@ -189,6 +184,8 @@ class mFixture{
       
       for(int i=0;i<memLoopTrain;i++)
       {
+        
+        nn.PreTrainProcess();
         nn.TestTrain(InX,OuY,iter,lRate,false);
       }
       
