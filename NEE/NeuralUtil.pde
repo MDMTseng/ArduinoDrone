@@ -2,6 +2,7 @@
 class s_neuron{
   public float SumVar;
   public float latestVar;
+  public float trainError;
   
   
   public int post_neuron_L;
@@ -305,10 +306,10 @@ class s_neuron_net{
         float CosSim=layer[i].CosSimilarW(layer[j]);
         if(CosSim>CosSimValve)
         {
-          //System.out.printf(">>>:%f...\n ",CosSim);
+          System.out.printf(">>>:%f...\n ",CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
-            //System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
+            System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
             layer[j].W[k]=(layer[i].W[k]+layer[j].W[k])/2;
             layer[j].ADss[k]=(layer[j].ADss[k]+layer[i].ADss[k])/2;
             layer[i].W[k]= XRand(0,0.5)/2;
@@ -341,7 +342,7 @@ class s_neuron_net{
   
   
   //BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer);
-  int Train_1(s_neuron layer[],float Error[],int ErrorL,float Buffer[],boolean crossEn,float learningRate)
+  void Train_1(s_neuron layer[],boolean crossEn,float learningRate)
   {
     //     Y=XW 
     // X -W--> |Sig| ->Z
@@ -354,20 +355,13 @@ class s_neuron_net{
     //dZ/dY = Sigmoid(Y)'
     //dY/dW = X
     
-    //System.out.printf("Error.length %d  layer.length %d",Error.length,layer.length);
-    if(ErrorL!=layer.length)return -1;
-    
-    //float PErr[] = new float[layer[0].pre_neuron_L-1];
-    
-    int BufferL=layer[0].pre_neuron_L-1;
-    for(int i=0;i<BufferL;i++)Buffer[i]=0;
     
     float lRate=learningRate;
     
     
     float WAve =0;
     
-    for (int i=0;i<ErrorL;i++) 
+    for (int i=0;i<layer.length;i++) 
     {
      for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++)
       {
@@ -377,8 +371,8 @@ class s_neuron_net{
           
       }
     }
-    for (int i=0;i<ErrorL;i++) {
-      float dPdZ = Error[i];
+    for (int i=0;i<layer.length;i++) {
+      float dPdZ = layer[i].trainError;
       
      /* lRate = dPdZ*limit;
       if(lRate<0)lRate=-lRate;
@@ -392,13 +386,9 @@ class s_neuron_net{
       for (int j=0;j<layer[i].pre_neuron_L;j++)
       {
         float dYdW = layer[i].pre_neuron_list[j].latestVar;
+        layer[i].pre_neuron_list[j].trainError+=dPdY*(layer[i].W[j])/(layer.length-1);
         
-        if(j!=layer[i].pre_neuron_L-1)
-        {
-          Buffer[j]+=dPdY*(layer[i].W[j])/(ErrorL-1);
-          WAve+=layer[i].W[j];
-        }
-        float dX=dPdY*dYdW;
+        float dX=dPdY*dYdW;//AdaGrad kind of
         layer[i].ADss[j]+=dX*dX;
         float sqrtAdss=sqrt(layer[i].ADss[j]);
         if(sqrtAdss!=0)
@@ -417,11 +407,11 @@ class s_neuron_net{
         }
       }
     }
-    WAve/=ErrorL*(layer[0].pre_neuron_L-1);
+    //WAve/=ErrorL*(layer[0].pre_neuron_L-1);
     
     
     
-    return BufferL;
+    return;
   }
   
   void softMax()
@@ -443,36 +433,14 @@ class s_neuron_net{
     
   }
   
-  void Train_S(float expected_output[],float lRate,boolean crossEn)
+  void Train_S(float lRate,boolean crossEn)
   {
-    if(output.length!=expected_output.length)return;
-    float Error[] = new float[250];
-    int ErrorL=0;
-    float Buffer[] = new float[250];
-    int BufferL=0;
-   // softMax();
-    ErrorL = output.length;
-    for (int i=0;i<output.length;i++)
-    {
-      Error[i] = expected_output[i] - output[i].latestVar;
-      //float absErr=Error[i]>0?Error[i]:-Error[i];
-      //Error[i]=(float)Math.exp(absErr*absErr*absErr)/5*(Error[i]>0?1:-1);
-    }
+    // softMax();
+    
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
-      BufferL = Train_1(this.ns.get(i),Error,ErrorL,Buffer,crossEn&&(i==this.ns.size()-1),lRate);
-      if(BufferL<=0)break;
-      float TmpBuf[];
-      TmpBuf=Buffer;
-      Buffer=Error;
-      Error=TmpBuf;
-      
-      int TmpBufL;
-      TmpBufL=BufferL;
-      BufferL=ErrorL;
-      ErrorL=TmpBufL;
-      
+      Train_1(this.ns.get(i),crossEn&&(i==this.ns.size()-1),lRate);
     }
     
   }
@@ -497,12 +465,12 @@ class s_neuron_net{
     //System.out.printf("\n");
   }
   
-  float calcError(float expected_output[])
+  float calcError()
   {
     float out=0;
-    for (int i=0;i<expected_output.length;i++)
+    for (int i=0;i<output.length;i++)
     {
-      float tmp = expected_output[i] - output[i].latestVar;
+      float tmp = output[i].trainError;
       out += tmp*tmp;
     }
     return -out/2;
@@ -561,27 +529,94 @@ class s_neuron_net{
   
   float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn)
   {
-    float expectedOut[]=new float[output.length];
-  
     //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
     
     for(int k=0;k<InX.length;k++)
     {
       input[k].latestVar=InX[k];
     }
-    for(int k=0;k<OuY.length;k++)
-    {
-      expectedOut[k]=OuY[k];
-    }
     this.calc();
     
-    float ErrorPow=-calcError(expectedOut);
-    Train_S(expectedOut,lRate,crossEn);
+    for (int i=this.ns.size()-2;i>=0;i--)//last layer will be set later
+    {
+      s_neuron layer[]=this.ns.get(i);
+      for (int j=0;j<layer.length;j++)
+      {
+        layer[j].trainError = 0;
+      }
+    }
+    
+    for(int k=0;k<OuY.length;k++)
+    {
+      output[k].trainError=OuY[k]-output[k].latestVar;
+    }
+    
+    float ErrorPow=-calcError();
+    Train_S(lRate,crossEn);
     
     return ErrorPow;
   }
   
+ 
   
+    void TestTrainRecNN(float InX[],float OuY[],float lRate,boolean crossEn,int RecTrainIter,int memNum)
+    {
+      //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
+      
+      for(int k=0;k<InX.length;k++)
+        input[k].latestVar=InX[k];
+      calc();
+      
+      //float ErrorPow=-calcError();
+
+      /*
+       
+           ____________
+       ----|           |---
+       ----|           |---
+    mem----|___________|--- mem
+         |               |
+         |_____mem_______|
+  
+      inErr(tmp) = DestOut - outVar (only mem)
+      loop{
+        outVar = DestOut -inErr(tmp)   (only mem)
+        Clear all trainError
+        outErr = DestOut - outVar     (ALL)  => mem's outErr will be inErr
+        TRAIN...
+      }
+      */
+
+      for(int k=0;k<memNum;k++)
+      {
+        input[input.length-1-k].trainError=OuY[output.length-1-k]-output[output.length-1-k].latestVar;
+      }
+      
+      for(int j=0;j<RecTrainIter;j++)
+      {
+        for(int k=0;k<memNum;k++)
+        {
+          output[output.length-1-k].latestVar=OuY[output.length-1-k]-input[input.length-1-k].trainError;
+        }
+        for (int i=ns.size()-2;i>=0;i--)//last layer will be set later
+        {
+          s_neuron layer[]=ns.get(i);
+          for (int k=0;k<layer.length;k++)
+          {
+            layer[k].trainError = 0;
+          }
+        }
+        for(int k=0;k<OuY.length;k++)
+        {
+          output[k].trainError=OuY[k]-output[k].latestVar;
+        }
+        
+        Train_S(lRate,crossEn);
+        
+        
+      }
+      
+    }
   
   
 }

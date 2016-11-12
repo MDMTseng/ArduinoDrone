@@ -129,7 +129,7 @@ class mFixtureEnv{
     
     
     
-    float r=cre.size*1;//x0.5
+    float r=cre.size*2;//x0.5
     
     
     
