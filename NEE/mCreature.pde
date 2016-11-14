@@ -38,7 +38,7 @@ class mFixture{
     float in_peerInfo;
     float in_eyesBeam[]=new float[5];
     
-    float inout_mem[]=new float[2];
+    float inout_mem[]=new float[4];
     
     float ou_turnSpeed;
     float ou_speedAdj;
@@ -464,7 +464,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     seeOtherC=0;
     speeUpC=0;
     CC.in_energy=0.5;
-    size=20;
+    size=10;
   }
   
   void birth(mCreatureEv parents[],float fitness[])
@@ -475,8 +475,8 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       nn_parents[i]=parents[i].CC.nn;
     }
     CC.nn.GeneticCrossNN(nn_parents,fitness);
-    CC.nn.AddNNNoise(0.01);
-    CC.nn.AddNNmutate(0.01);
+    CC.nn.AddNNNoise(0.02);
+    if(random(0,1)>0.8)CC.nn.AddNNmutate(0.1);
     CC.nn.PreTrainProcess();
     revive();
     
@@ -492,7 +492,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       CC.in_energy-=0.002*mag;
     else
     {
-      CC.in_energy-=0.1*mag;
+      CC.in_energy-=0.01*mag;
     }
       
   }
@@ -503,7 +503,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   float getFitness()
   {
     float turnAmount=turnX>0?turnX:-turnX;
-    return lifeTime-turnAmount+speeUpC;
+    return lifeTime-turnAmount+speeUpC/4;
   }
   
   boolean isfellBad=false;
@@ -512,7 +512,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     lifeTime++;
     
     
-    float spreadAngle=60;
+    float spreadAngle=20;
     PVector ret_intersect=new PVector();
     float speedAngle=atan2(speed.y,speed.x)-spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
     
@@ -538,7 +538,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
         collideCre.CC.in_peerInfo+=CC.ou_sendInfo/distret;
         
         //collideCre.CC.in_energy+=0.001/distret;
-        CC.in_energy+=0.001/distret;
+        CC.in_energy+=0.003/distret;
         CC.in_eyesBeam[i]=100/distret;
       }
       else
@@ -561,7 +561,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     speedAbs=speed.mag();
     //CC.in_energy-=0.001/speedAbs;
     CC.in_currentSpeed=speedAbs/2;
-    rotation_speed((1+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
+    rotation_speed((0.3+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
     turnX+=CC.ou_turnSpeed;
     if(turnX>10||turnX<-10)
       CC.in_energy-=0.0001;
@@ -573,7 +573,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     {
       speed.mult(0.9);
     }
-    else if(speedAbs<0.1)
+    else if(speedAbs<0.5)
       speed.mult(random(1.1,1.2));
 
     
@@ -589,6 +589,9 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     fill(255);
     stroke(255);
     line(pos.x+offsetX,-pos.y+offsetY,pos.x+5*speed.x+offsetX,-(pos.y+5*speed.y)+offsetY );
+    
+    noFill();
+    arc(pos.x+offsetX,-pos.y+offsetY, size+2, size+2, 0, 2*CC.in_energy*PI);
   }
   
 }

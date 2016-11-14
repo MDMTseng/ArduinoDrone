@@ -3,7 +3,7 @@ import java.util.Collections;
 class NeuralEv{
 
   mFixtureEnv env=new mFixtureEnv(860,500);
-  mCreatureEv cres[] = new mCreatureEv[35];
+  mCreatureEv cres[] = new mCreatureEv[75];
   
   ArrayList <mCreatureEv> honorList=new ArrayList <mCreatureEv>();
   Draw_s_neuron_net drawNN=new Draw_s_neuron_net();
@@ -48,9 +48,10 @@ class NeuralEv{
     
   }
     
-  void EliminateHornorList(ArrayList <mCreatureEv> SortedList)
+  void EliminateHornorList(ArrayList <mCreatureEv> SortedList,float eleminatePercent)
   {
-    for(int i=SortedList.size()*1/4;i<SortedList.size();i++)
+    int start=(int)(SortedList.size()*(1-eleminatePercent));
+    for(int i=start;i<SortedList.size();i++)
     {
       SortedList.remove(i--);
     }
@@ -104,10 +105,10 @@ class NeuralEv{
     
   }
   
+  int MaxloopC=1000;
   int GEN=0;
   void draw(){
     if(gatX||simCount<=0)return;
-    
     strokeWeight(3);
     background(0);
     int hH=height/2;
@@ -117,9 +118,10 @@ class NeuralEv{
     
     mCreatureEv parentList[]=new mCreatureEv[3];
     float parentFitness[]=new float[parentList.length];
+    MaxloopC--;
     for(mCreatureEv cre:cres)
     {
-      if(cre.CC.in_energy<0)
+      if(cre.CC.in_energy<0||MaxloopC<=0)
       {
         if(env.rmCreature(cre))
         {
@@ -132,10 +134,10 @@ class NeuralEv{
     if(honorList.size()==cres.length)
     {
       println("DIE out GEN:"+GEN++);
-      
+      MaxloopC=16000;
       
       Collections.sort(honorList);
-      EliminateHornorList(honorList);
+      EliminateHornorList(honorList,0.8);
       for(mCreatureEv dcre:honorList)
       {
         println("Sur:"+dcre.getFitness());
@@ -160,7 +162,7 @@ class NeuralEv{
           for(int i=0;i<parentList.length;i++)
           {
             parentList[i]=GetGoodFitCre(honorList);
-            parentFitness[i]=parentList[i].getFitness();
+            parentFitness[i]=(parentList[i].getFitness());
           }
           dcre.birth(parentList,parentFitness);
         }

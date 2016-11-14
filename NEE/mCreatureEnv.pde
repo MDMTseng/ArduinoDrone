@@ -53,6 +53,25 @@ class mFixtureEnv{
     float collideAmount=0;
     PVector collideVec=new PVector();
     
+    
+    
+    for(mFixture xcre:mCre)
+    {
+      if(xcre==cre)continue;
+      collideVec.set(cre.pos);
+      
+      collideVec.sub(xcre.pos);
+      if(collideVec.mag()<(xcre.size+cre.size)/2)
+      {
+        collideObj=xcre;
+        collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.5);
+        collideAmount+=0.2;
+        ret_normalExcced.add(collideVec);
+      }
+    }
+    
+    collideVec.mult(0);
+    
     if(cre.pos.x-cre.size/2<-frameW/2)
     {
       collideVec.x=frameW/2+(cre.pos.x-cre.size/2);
@@ -80,21 +99,6 @@ class mFixtureEnv{
     if(collideAmount!=0)
     {
       collideObj=mf;
-    }
-    
-    for(mFixture xcre:mCre)
-    {
-      if(xcre==cre)continue;
-      collideVec.set(cre.pos);
-      
-      collideVec.sub(xcre.pos);
-      if(collideVec.mag()<(xcre.size+cre.size)/2)
-      {
-        collideObj=xcre;
-        collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.5*0.2);
-        collideAmount+=0.2;
-        ret_normalExcced.add(collideVec);
-      }
     }
     
     if(collideAmount>0)
