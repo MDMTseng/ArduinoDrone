@@ -59,6 +59,7 @@ class HistDataDraw{
   int HistH=0;
   void Draw(float newData,int x,int y,int w,int h) {
     
+    
     Hist[HistH]=newData;
     HistH=(HistH+1)%Hist.length;
     Draw( x, y, w, h);
@@ -66,7 +67,6 @@ class HistDataDraw{
   
   void Draw(int x,int y,int w,int h) {
     
-    line(x,y,x+w,y);
     line(x,y+h,x+w,y+h);
     int PreadH=0;
     int readH=HistH;

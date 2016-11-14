@@ -1,5 +1,5 @@
 class mFixtureEnv{
-  
+  mFIXStruct mf=new mFIXStruct();
   ArrayList <mFixture> mCre=new ArrayList <mFixture>();
   
   float frameW,frameH;
@@ -38,14 +38,18 @@ class mFixtureEnv{
     
     return true;
   }
-  void addCreature(mFixture cre)
+  boolean addCreature(mFixture cre)
   {
-    mCre.add(cre);
+    return mCre.add(cre);
   }
-  boolean testEnvCollide(final mFixture cre,PVector ret_normalExcced)
+  boolean rmCreature(mFixture cre)
+  {
+    return mCre.remove(cre);
+  }
+  mFixture testEnvCollide(final mFixture cre,PVector ret_normalExcced)
   {
     ret_normalExcced.mult(0);
-    
+    mFixture collideObj=null;
     float collideAmount=0;
     PVector collideVec=new PVector();
     
@@ -72,6 +76,12 @@ class mFixtureEnv{
       ret_normalExcced.add(collideVec);
       
     }
+    
+    if(collideAmount!=0)
+    {
+      collideObj=mf;
+    }
+    
     for(mFixture xcre:mCre)
     {
       if(xcre==cre)continue;
@@ -80,6 +90,7 @@ class mFixtureEnv{
       collideVec.sub(xcre.pos);
       if(collideVec.mag()<(xcre.size+cre.size)/2)
       {
+        collideObj=xcre;
         collideVec.mult(-xcre.mess/(xcre.mess+cre.mess)*0.5*0.2);
         collideAmount+=0.2;
         ret_normalExcced.add(collideVec);
@@ -89,10 +100,10 @@ class mFixtureEnv{
     if(collideAmount>0)
     {
       ret_normalExcced.div(1);
-      return true;
+      return collideObj;
     }
     
-    return false;
+    return null;
   }
   
   int getquadrant (float angle_rad)
@@ -145,7 +156,7 @@ class mFixtureEnv{
     return Float.POSITIVE_INFINITY;
   }
   
-  float testBeamCollide(PVector position,float angle_rad,PVector ret_intersect)
+  float testBeamCollide(PVector position,float angle_rad,PVector ret_intersect,mFixture collideObj[])
   {
     PVector intersect=new PVector();
     PVector EnvBound1=new PVector();
@@ -153,7 +164,6 @@ class mFixtureEnv{
     int vec_quadrant= getquadrant ( angle_rad);
     float minDist=Float.POSITIVE_INFINITY;
     final PVector orientation=new PVector(cos(angle_rad),sin(angle_rad));
-    
     PVector position2=new PVector();
     position2.set(orientation);
     position2.add(position);
@@ -167,6 +177,7 @@ class mFixtureEnv{
     
     */
     
+    collideObj[0]=null;
     
     EnvBound1.x= frameW/2;
     EnvBound1.y= frameH/2;
@@ -233,6 +244,9 @@ class mFixtureEnv{
         minDist=dist;
       }
     }
+    if(isCollide)
+      collideObj[0]=mf;
+    
     
     for(mFixture cre:mCre)
     {
@@ -241,6 +255,7 @@ class mFixtureEnv{
       if(dist<minDist)
       {
         isCollide=true;
+        collideObj[0]=cre;
         ret_intersect.set(intersect);
         minDist=dist;
       }
@@ -248,7 +263,8 @@ class mFixtureEnv{
     }
     
     
-    if(!isCollide)return Float.POSITIVE_INFINITY;
+    if(!isCollide)minDist= Float.POSITIVE_INFINITY;
+    
     return minDist;
   }
   
@@ -278,10 +294,11 @@ class mFixtureEnv{
     
     for(mFixture cre:mCre)
     {
-      if(testEnvCollide(cre,ret_normalExcced))
+      mFixture collideObj=testEnvCollide(cre,ret_normalExcced);
+      if(collideObj!=null)
       {
         simulateCollide(cre,ret_normalExcced);
-        cre.handleCollideExceedNormal(ret_normalExcced);
+        cre.handleCollideExceedNormal(ret_normalExcced,collideObj);
       }
     }
   }
@@ -291,14 +308,8 @@ class mFixtureEnv{
     
     for(mFixture cre:mCre)
     {
-      fill(cre.c);
-      stroke(cre.c);
-      ellipse(cre.pos.x+frameW/2,-cre.pos.y+frameH/2, cre.size, cre.size);
+      cre.draw(frameW/2,frameH/2);
       
-      
-      fill(255);
-      stroke(255);
-      line(cre.pos.x+frameW/2,-cre.pos.y+frameH/2,cre.pos.x+5*cre.speed.x+frameW/2,-(cre.pos.y+5*cre.speed.y)+frameH/2 );
     }
   }
   

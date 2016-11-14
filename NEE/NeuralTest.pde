@@ -1,10 +1,10 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,5,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,2});
 
   
 
-float InX[][]=new float[10][nn.input.length];
+float InX[][]=new float[150][nn.input.length];
 float OuY[][]=new float[InX.length][nn.output.length];
 Draw_s_neuron_net drawNN=new Draw_s_neuron_net();
 
@@ -19,7 +19,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   for(int i=0;i<InX.length/2;i++)
   {
       float x,y;
-      float t=(InX.length/2-i)*1.0/InX.length;
+      float t=(InX.length/2-i+1)*1.0/InX.length;
       x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
       y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
       InX[i][0]=x;
@@ -43,7 +43,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   }
   
   
-  for(int i=0;i<0*InX.length;i++)
+  for(int i=0;i<InX.length;i++)
   {
     int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX.length);
     float tmp;
@@ -76,7 +76,7 @@ void InXOuYAddNoise(float InX[][],float OuY[][],float Noise)
       
   }
 }
-float scrollingSpeed=0.0000;
+float scrollingSpeed=0.0005;
 
 
 
@@ -162,21 +162,22 @@ void X2(){
       stroke(255,0,128,100);
     }
     ellipse((InX[i][0])*2*200+hW,(InX[i][1])*2*200+hH+DrawYAdj, 8, 8);
-    
+    /*
     stroke(255,255,128,50);
     DFDOut0.Draw(nn.output[0].latestVar*200,i,InX.length,0,300,width,300);
     stroke(255,128,255,50);
-    DFDOut1.Draw(nn.output[0].latestVar/(nn.output[1].latestVar+nn.output[0].latestVar)*200,i,InX.length,0,300,width,300);
+    DFDOut1.Draw(nn.output[0].latestVar/(nn.output[1].latestVar+nn.output[0].latestVar)*200,i,InX.length,0,300,width,300);*/
     
   }
   
-  nn.PreTrainProcess();
+  //nn.PreTrainProcess();
   
+  /*for(int i=0;;i++)
   for(int i=0;i<InX.length;i++)
   {
     nn.TestTrainRecNN(InX[i],OuY[i],0.5,false,1,0);
-  }
-  float err=0;//nn.TestTrain(InX,OuY,1,0.5);
+  }*/
+  float err=nn.TestTrain(InX,OuY,25,0.5);
   
   
   
@@ -190,5 +191,19 @@ void X2(){
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
 }
+
+void keyPressed() {
+  if (key == CODED) {
+    if (keyCode == UP) {
+      scrollingSpeed *= 1.5;
+      scrollingSpeed+=0.0001;
+    } else if (keyCode == DOWN) {
+      scrollingSpeed /= 1.5;
+    } 
+  } else {
+    scrollingSpeed = 0;
+  }
+}
+
 
 }

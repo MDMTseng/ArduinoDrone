@@ -5,17 +5,18 @@ void setup() {
   frameRate(30);
 }
 NeuralTest nt = new NeuralTest();
-NeuralC nc=new NeuralC();
+NeuralEv nv=new NeuralEv();
 void draw()
 {
    
   //nt.X2();
-  nc.draw();
+  nv.draw();
 }
 
 float scrollingSpeed=0.000;
 
 
 void keyPressed() {
-  nc.keyPressed();
+  nv.keyPressed();
+  nt.keyPressed();
 }
