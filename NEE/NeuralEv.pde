@@ -3,7 +3,7 @@ import java.util.Collections;
 class NeuralEv{
 
   mFixtureEnv env=new mFixtureEnv(860,500);
-  mCreatureEv cres[] = new mCreatureEv[75];
+  mCreatureEv cres[] = new mCreatureEv[35];
   
   ArrayList <mCreatureEv> honorList=new ArrayList <mCreatureEv>();
   Draw_s_neuron_net drawNN=new Draw_s_neuron_net();
@@ -116,9 +116,8 @@ class NeuralEv{
     //drawNN.drawNN(cre.CC.nn,10,10,550,350);
 
     
-    mCreatureEv parentList[]=new mCreatureEv[3];
+    mCreatureEv parentList[]=new mCreatureEv[1];
     float parentFitness[]=new float[parentList.length];
-    MaxloopC--;
     for(mCreatureEv cre:cres)
     {
       if(cre.CC.in_energy<0||MaxloopC<=0)
@@ -134,10 +133,10 @@ class NeuralEv{
     if(honorList.size()==cres.length)
     {
       println("DIE out GEN:"+GEN++);
-      MaxloopC=16000;
+      MaxloopC=60000;
       
       Collections.sort(honorList);
-      EliminateHornorList(honorList,0.8);
+      EliminateHornorList(honorList,0.7);
       for(mCreatureEv dcre:honorList)
       {
         println("Sur:"+dcre.getFitness());
@@ -176,6 +175,7 @@ class NeuralEv{
     
     for(int i=0;i<simCount;i++)
     {    
+      MaxloopC--;
       env.simulate();
       if(i%20==0)
         env.draWorld();

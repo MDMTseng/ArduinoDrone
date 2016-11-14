@@ -38,7 +38,7 @@ class mFixture{
     float in_peerInfo;
     float in_eyesBeam[]=new float[5];
     
-    float inout_mem[]=new float[4];
+    float inout_mem[]=new float[0];
     
     float ou_turnSpeed;
     float ou_speedAdj;
@@ -83,7 +83,7 @@ class mFixture{
     int InoutIdx=0;
     void UpdateNeuronInput()
     {
-      skipIdx=(skipIdx+1)%10;
+      skipIdx=(skipIdx+1)%3;
       if(skipIdx==0)
       {
         InoutIdx++;
@@ -95,7 +95,6 @@ class mFixture{
       InX[InoutIdx][i++]=in_exhustedLevel;
       InX[InoutIdx][i++]=in_currentSpeed;
       InX[InoutIdx][i++]=in_peerInfo;
-      in_exhustedLevel/=1.01;
       for(int j=0;j<in_eyesBeam.length;j++)
       {
         InX[InoutIdx][i++]=in_eyesBeam[j];
@@ -188,28 +187,22 @@ class mFixture{
       }
       
     }
-    void BoostingTraining()//+ for reward
+    void BoostingTraining(float alpha)//+ for reward
     {
-      float alpha=0.1;
       int rIdx=InoutIdx;
-      for(int i=0;i<InX[0].length;i++)
+      for(int i=0;i<InX.length;i++)
       {
-          
-          OuY[rIdx][0]+=random(-alpha,alpha);
-
-          OuY[rIdx][1]+=random(-alpha,alpha);
-          
-          
-          for(int j=0;j<inout_mem.length;j++)
+          for(int j=0;j<InX[i].length;j++)
           {
-            OuY[rIdx][j+2]+=random(-alpha,alpha);
+            InX[rIdx][j]+=random(-alpha,alpha);
           }
+          
           rIdx--;
           if(rIdx<0)rIdx+=InX.length;
       }
       
       
-      training(InX,OuY,1,0.01);
+      training(InX,OuY,1,0.1);
     }
     float training(float InX[][],float OuY[][],int iter,float lRate)
     {
@@ -399,7 +392,7 @@ class mCreature extends mFixture{
     {
       
       if(random(0,1)>0.8)
-        CC.BoostingTraining();
+        CC.BoostingTraining(0.1);
     
     }
     
@@ -439,6 +432,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   float turnX=0;
   float speeUpC=0;
   int seeOtherC=0;
+  float preFiness;
   
   public int compareTo(mCreatureEv other) {
       return Float.compare(other.getFitness(),getFitness());// name.compareTo(other.name);
@@ -464,6 +458,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     seeOtherC=0;
     speeUpC=0;
     CC.in_energy=0.5;
+    preFiness=0;
     size=10;
   }
   
@@ -503,7 +498,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   float getFitness()
   {
     float turnAmount=turnX>0?turnX:-turnX;
-    return lifeTime-turnAmount+speeUpC/4;
+    return lifeTime-turnAmount*2+speeUpC/4;
   }
   
   boolean isfellBad=false;
@@ -548,7 +543,8 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
 
     
     }
-    if(CC.in_energy>1)CC.in_energy=1;
+   // CC.in_energy*=0.95;
+    //if(CC.in_energy>1)CC.in_energy=1;
     CC.in_peerInfo*=0.9;
     //CC.in_energy-=CC.in_peerInfo*0.000001;
     CC.UpdateNeuronInput();
@@ -568,7 +564,12 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
     
-    
+    if(CC.in_energy>0.8&&random(0,1)>0.8){
+      //println("Hit:"+preFiness);
+      CC.BoostingTraining(0.1);
+    }
+   
+      
     if(speedAbs>3)
     {
       speed.mult(0.9);

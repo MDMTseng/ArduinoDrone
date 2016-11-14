@@ -360,17 +360,17 @@ class s_neuron_net{
   
   void PreTrainProcess()
   {
-    //RandomDropOut(0.01);
+   // RandomDropOut(0.01);
     
     for (int i=this.ns.size()-2;i!=1;i--)
     {
-      Supress(this.ns.get(i),0.95);
+      Supress(this.ns.get(i),0.99);
     }
     
     for (int i=this.ns.size()-2;i!=0;i--)
     {
-      AttractSimNode(this.ns.get(i),0.00,0.80);
-      TrimSimNode(this.ns.get(i),0.97);
+      AttractSimNode(this.ns.get(i),0.80,0.80);
+      TrimSimNode(this.ns.get(i),0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
       NeuronNodeRevive(this.ns.get(i),0.9);
     }
