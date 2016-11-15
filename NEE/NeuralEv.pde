@@ -177,7 +177,7 @@ class NeuralEv{
     {    
       MaxloopC--;
       env.simulate();
-      if(i%20==0)
+      if(i%(simCount/10+1)==0)
         env.draWorld();
     }
     env.draWorld();
