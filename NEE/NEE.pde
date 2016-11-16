@@ -9,8 +9,8 @@ NeuralEv nv=new NeuralEv();
 void draw()
 {
    
-  //nt.X2();
-  nv.draw();
+  nt.X2();
+  //nv.draw();
 }
 
 float scrollingSpeed=0.000;

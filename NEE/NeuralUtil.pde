@@ -340,7 +340,7 @@ class s_neuron_net{
     
   }
   int CCCC=0;
-  void Supress(s_neuron layer[],float alpha)
+  void SupressS(s_neuron layer[],float alpha)
   {
     CCCC++;
     for (int i=0;i<layer.length;i++)
@@ -357,19 +357,62 @@ class s_neuron_net{
     }
     
   }
+  void SupressL2(s_neuron layer[],float alpha)
+  {
+    for (int i=0;i<layer.length;i++)
+    {
+      for (int j=0;j<layer[i].pre_neuron_L-1;j++)
+      {
+        float d=layer[i].W[j];
+        //int k=(CCCC/6)%(layer.length);
+        
+        //layer[i].W[j]=(i==k)?(cos(2*(i*j)*PI/(layer[i].pre_neuron_L-1)/layer.length)):0;
+        layer[i].W[j]=d*(alpha);
+          
+      }
+    }
+    
+  }
   
+  void SupressL1X(s_neuron layer[],float rate)
+  {
+    for (int i=0;i<layer.length;i++)
+    {
+      float xr=0;
+      for (int j=0;j<layer[i].pre_neuron_L-1;j++)
+      {
+        float d=layer[i].W[j];
+       
+        xr+=(d>0)?d:-d;
+          
+      }
+      
+      xr/=layer[i].pre_neuron_L-1;
+      for (int j=0;j<layer[i].pre_neuron_L-1;j++)
+      {
+        float d=layer[i].W[j];
+        if(d<0) layer[i].W[j]+=rate*xr;
+        else    layer[i].W[j]-=rate*xr;
+        
+        if(layer[i].W[j]*d<0)layer[i].W[j]=0;
+          
+      }
+    }
+    
+  }
   void PreTrainProcess()
   {
    // RandomDropOut(0.01);
     
     for (int i=this.ns.size()-2;i!=1;i--)
     {
-      Supress(this.ns.get(i),0.99);
+      SupressL2(this.ns.get(i),0.999);
+      //SupressL1X(this.ns.get(i),0.001);
     }
     
     for (int i=this.ns.size()-2;i!=0;i--)
     {
-      AttractSimNode(this.ns.get(i),0.80,0.80);
+      AttractSimNode(this.ns.get(i),0.50,0.80);
       TrimSimNode(this.ns.get(i),0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
       NeuronNodeRevive(this.ns.get(i),0.9);
