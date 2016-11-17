@@ -159,13 +159,15 @@ class s_neuron{
   }
   public double exciteF(double x) {
     return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
-    //return (x>0)?0.5*x:0.01*x;
+    //return (x>0)?x:0.01*x;
   }
   
   public double d_exciteF(double sigmoid_var) {
     sigmoid_var=(sigmoid_var+1)/2;
     double slop=2*sigmoid_var*(1-(sigmoid_var));
     return (slop+0.02)/1.01;
+    
+    //return sigmoid_var>0? 1:0.01;
     
   }
 }

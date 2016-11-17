@@ -1,6 +1,6 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,100,10,100,10,2});
 
   
 
@@ -81,7 +81,7 @@ float scrollingSpeed=0.0005;
 
 
 int TrainCount=0;
-float scrollingCount=-0.0;
+float scrollingCount=-0.55;
 
 
 HistDataDraw ErrHist=new HistDataDraw(1500);
@@ -108,7 +108,7 @@ void X2(){
   //InXOuYAddNoise(InX,OuY,0.005);
   
   
-  drawNN.drawNN(nn,10,10,550,350);
+ // drawNN.drawNN(nn,10,10,550,350);
   
   
   int DrawYAdj=150;
@@ -170,7 +170,7 @@ void X2(){
     
   }
   
-  nn.PreTrainProcess();
+  //nn.PreTrainProcess();
   
   /*for(int i=0;;i++)
   for(int i=0;i<InX.length;i++)
