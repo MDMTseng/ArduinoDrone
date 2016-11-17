@@ -38,7 +38,7 @@ class mFixture{
     float in_peerInfo;
     float in_eyesBeam[]=new float[5];
     
-    float inout_mem[]=new float[0];
+    float inout_mem[]=new float[4];
     
     float ou_turnSpeed;
     float ou_speedAdj;
@@ -176,7 +176,7 @@ class mFixture{
           if(rIdx<0)rIdx+=InX.length;
       }
       
-      float lRate =(stimulationLevel)>0? 0.05:0.1;
+      float lRate =(stimulationLevel)>0? 0.5:1;
       training(InX,OuY,iter,lRate);
       if(expShareList!=null)
       for(int i=0;i<expShareList.length;i++)
@@ -216,7 +216,7 @@ class mFixture{
         {
           for(int k=0;k<InX.length;k++)
           {
-            nn.TestTrainRecNN(InX[j],OuY[j],lRate,false,1,inout_mem.length);
+            nn.TestTrainRecNN(InX[j],OuY[j],lRate,false,5,inout_mem.length);
           }
         }
       }
@@ -388,13 +388,7 @@ class mCreature extends mFixture{
     
     CC.in_energy*=0.9999;
     
-    if(!guideGate&&CC.ou_turnSpeed>-0.1&&CC.ou_turnSpeed<0.1)
-    {
-      
-      if(random(0,1)>0.8)
-        CC.BoostingTraining(0.1);
-    
-    }
+   
     
     
     //stroke(0,255,0,100);
@@ -566,7 +560,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     
     if(CC.in_energy>0.8&&random(0,1)>0.8){
       //println("Hit:"+preFiness);
-      CC.BoostingTraining(0.1);
+      CC.BoostingTraining(0.3);
     }
    
       

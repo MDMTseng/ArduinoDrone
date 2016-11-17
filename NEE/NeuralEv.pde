@@ -152,11 +152,6 @@ class NeuralEv{
       
       for(mCreatureEv dcre:cres)
       {
-        if(honorList.contains(dcre))
-        {
-          dcre.revive();
-        }
-        else
         {
           for(int i=0;i<parentList.length;i++)
           {
@@ -189,9 +184,9 @@ class NeuralEv{
     cres[0].c=color(180,150,180);
     drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     
-    int NNN=3;
+    int NNN=6;
     int Y=250;
-    for(int i=0;i<NNN;i++)
+    for(int i=3;i<NNN;i++)
     {
       
       stroke(i*255/NNN,255-i*255/NNN,(180+i*255/NNN)%255);
