@@ -282,7 +282,7 @@ class s_neuron_net{
           float tmp=(CosSim-CosSimValve)*(1-CosSimValve);
           float attractAlpha=1-(1-alpha)*tmp*tmp;
           
-          //System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
+          System.out.printf("C%02d:%f...\n ",layer[j].GetActual_pre_neuron_L(),CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
             tmp = layer[j].W[k];
@@ -408,8 +408,8 @@ class s_neuron_net{
     
     for (int i=this.ns.size()-2;i!=1;i--)
     {
-      SupressL2(this.ns.get(i),0.999);
-      //SupressL1X(this.ns.get(i),0.001);
+      SupressL2(this.ns.get(i),0.99);
+      SupressL1X(this.ns.get(i),0.001);
     }
     
     for (int i=this.ns.size()-2;i!=0;i--)
@@ -648,14 +648,14 @@ class s_neuron_net{
 
       for(int k=0;k<memNum;k++)
       {
-        input[input.length-1-k].trainError=OuY[output.length-1-k]-output[output.length-1-k].latestVar;
+        input[input.length-1-k].trainError=OuY[output.length-1-k];
       }
       
       for(int j=0;j<RecTrainIter;j++)
       {
         for(int k=0;k<memNum;k++)
         {
-          output[output.length-1-k].latestVar=OuY[output.length-1-k]-input[input.length-1-k].trainError;
+          output[output.length-1-k].latestVar=input[input.length-1-k].trainError;
         }
         for (int i=ns.size()-2;i>=0;i--)//last layer will be set later
         {
@@ -668,7 +668,9 @@ class s_neuron_net{
         for(int k=0;k<OuY.length;k++)
         {
           output[k].trainError=OuY[k]-output[k].latestVar;
+          //print(output[k].trainError+" , ");
         }
+          //println();
         
         //softMax();
         

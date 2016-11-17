@@ -69,11 +69,11 @@ class mFixture{
       in_peerInfo=0;
       for(int i=0;i<in_eyesBeam.length;i++)
       {
-        in_eyesBeam[0]=0;
+        in_eyesBeam[i]=0;
       }
       for(int i=0;i<inout_mem.length;i++)
       {
-        inout_mem[0]=0;
+        inout_mem[i]=0;
       }
     }
     
