@@ -174,7 +174,7 @@ class s_neuron{
 
 class s_neuron_net{
   ArrayList <s_neuron[]> ns;
-  s_neuron ones[];
+  s_neuron one_offset;
   s_neuron input[];
   s_neuron hidden[][];
   s_neuron output[];
@@ -188,7 +188,9 @@ class s_neuron_net{
   {
     if(netDim.length<2)
       return;
-    ones =  new s_neuron[netDim.length-1]; 
+    one_offset =  new s_neuron(1); 
+    one_offset.latestVar=1;
+    
     ns = new ArrayList <s_neuron[]>();
     
     
@@ -207,9 +209,6 @@ class s_neuron_net{
       prelayer=currentlayer;
       currentlayer=new s_neuron[netDim[i]];
       
-      ones[i-1]=new s_neuron(1);
-      ones[i-1].latestVar=1;
-      
       for(int j=0;j<currentlayer.length;j++)
       {
         currentlayer[j] = new s_neuron(1);
@@ -217,7 +216,7 @@ class s_neuron_net{
         {
           currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
         }
-        currentlayer[j].add_pre_neuron(ones[i-1] ,XRand(0,0.5)*2);
+        currentlayer[j].add_pre_neuron(one_offset ,XRand(0,0.5)*2);
       }
       ns.add(currentlayer);
     }
@@ -435,6 +434,18 @@ class s_neuron_net{
     //dZ/dY = Sigmoid(Y)'
     //dY/dW = X
     
+    float sdfsd=0;
+     for (int i=0;i<layer.length;i++) {
+      float dPdZ = layer[i].trainError;
+      for (int j=0;j<layer[i].pre_neuron_L;j++)
+      {
+        System.out.printf("%f,", layer[i].pre_neuron_list[j].trainError);
+       // layer[i].pre_neuron_list[j].trainError=0;
+         
+      }
+     }
+      
+        System.out.printf("\n");
     
     float lRate=learningRate;
     
@@ -456,7 +467,7 @@ class s_neuron_net{
       for (int j=0;j<layer[i].pre_neuron_L;j++)
       {
         float dYdW = layer[i].pre_neuron_list[j].latestVar;
-        layer[i].pre_neuron_list[j].trainError+=dPdY*(layer[i].W[j])/(layer.length-1);
+        layer[i].pre_neuron_list[j].trainError+=dPdY*(layer[i].W[j]);
         
         float dX=dPdY*dYdW;//AdaGrad kind of
         layer[i].ADss[j]+=dX*dX;
@@ -468,7 +479,7 @@ class s_neuron_net{
           if(dX>1)dX=1;
           //dX=1-dX;
           //dX=dX*dX;
-          dX=dX*dX*dX*0.000001;
+          dX=dX*dX*0.000001;
           layer[i].ADss[j]*=1-dX;
         }
         else
@@ -604,12 +615,12 @@ class s_neuron_net{
         layer[j].trainError = 0;
       }
     }
+    one_offset.trainError = 0;
     
     for(int k=0;k<OuY.length;k++)
     {
       output[k].trainError=OuY[k]-output[k].latestVar;
     }
-    
     float ErrorPow=-calcError();
     Train_S(lRate,crossEn);
     
@@ -665,6 +676,7 @@ class s_neuron_net{
             layer[k].trainError = 0;
           }
         }
+        one_offset.trainError = 0;
         for(int k=0;k<OuY.length;k++)
         {
           output[k].trainError=OuY[k]-output[k].latestVar;

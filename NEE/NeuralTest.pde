@@ -1,6 +1,6 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,100,10,100,10,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,2,2});
 
   
 
@@ -43,7 +43,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   }
   
   
-  for(int i=0;i<InX.length;i++)
+  for(int i=0;i<0*InX.length;i++)
   {
     int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX.length);
     float tmp;
@@ -76,7 +76,7 @@ void InXOuYAddNoise(float InX[][],float OuY[][],float Noise)
       
   }
 }
-float scrollingSpeed=0.0005;
+float scrollingSpeed=0.0005*0;
 
 
 
@@ -108,7 +108,7 @@ void X2(){
   //InXOuYAddNoise(InX,OuY,0.005);
   
   
- // drawNN.drawNN(nn,10,10,550,350);
+  drawNN.drawNN(nn,10,10,550,350);
   
   
   int DrawYAdj=150;
@@ -170,14 +170,14 @@ void X2(){
     
   }
   
-  //nn.PreTrainProcess();
+  nn.PreTrainProcess();
   
   /*for(int i=0;;i++)
   for(int i=0;i<InX.length;i++)
   {
     nn.TestTrainRecNN(InX[i],OuY[i],0.5,false,1,0);
   }*/
-  float err=nn.TestTrain(InX,OuY,25,0.1);
+  float err=nn.TestTrain(InX,OuY,1,0.9);
   
   
   
