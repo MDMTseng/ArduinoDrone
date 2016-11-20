@@ -38,7 +38,7 @@ class mFixture{
     float in_peerInfo;
     float in_eyesBeam[]=new float[5];
     
-    float inout_mem[]=new float[4];
+    float inout_mem[]=new float[0];
     
     float ou_turnSpeed;
     float ou_speedAdj;
@@ -211,14 +211,17 @@ class mFixture{
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess();
-        for(int j=0;j<iter;j++)
+       // nn.PreTrainProcess();
+        /*for(int j=0;j<iter;j++)
         {
           for(int k=0;k<InX.length;k++)
           {
             nn.TestTrainRecNN(InX[j],OuY[j],lRate,false,5,inout_mem.length);
           }
-        }
+        }*/
+        
+        
+        nn.TestTrain(InX,OuY,iter,lRate);
       }
       
       return  0;
@@ -426,12 +429,28 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   float turnX=0;
   float speeUpC=0;
   int seeOtherC=0;
-  float preFiness;
   
   public int compareTo(mCreatureEv other) {
       return Float.compare(other.getFitness(),getFitness());// name.compareTo(other.name);
   }
   
+  
+  void clone(mCreatureEv from)
+  {
+    
+    s_neuron_net nn_from[]=new s_neuron_net[1];
+    float fitness[] =new float[1];
+    nn_from[0]=from.CC.nn;
+    fitness[0]=from.getFitness();
+    CC.nn.GeneticCrossNN(nn_from,fitness);
+    revive();
+    
+    turnX=from.turnX;
+    speeUpC=from.speeUpC;
+    lifeTime=from.lifeTime;
+    seeOtherC=from.seeOtherC;
+    
+  }
   
   mCreatureEv()
   {
@@ -444,6 +463,11 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     birth(parents,fitness);
   }
   
+  mCreatureEv(mCreatureEv cloneFrom)
+  {
+    this();
+    clone(cloneFrom);
+  }
   void revive()
   {
     reset();
@@ -452,7 +476,6 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     seeOtherC=0;
     speeUpC=0;
     CC.in_energy=0.5;
-    preFiness=0;
     size=10;
   }
   
@@ -464,7 +487,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       nn_parents[i]=parents[i].CC.nn;
     }
     CC.nn.GeneticCrossNN(nn_parents,fitness);
-    CC.nn.AddNNNoise(0.02);
+    CC.nn.AddNNNoise(0.01);
     if(random(0,1)>0.8)CC.nn.AddNNmutate(0.1);
     CC.nn.PreTrainProcess();
     revive();
@@ -478,7 +501,11 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   {
     float mag=normalExcced.mag();
     if((collideObj instanceof mCreatureEv) )
+    {
       CC.in_energy-=0.002*mag;
+      mCreatureEv obj=((mCreatureEv)collideObj);
+      obj.CC.in_energy+=0.002*mag;
+    }
     else
     {
       CC.in_energy-=0.01*mag;
@@ -528,7 +555,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
         
         //collideCre.CC.in_energy+=0.001/distret;
         CC.in_energy+=0.003/distret;
-        CC.in_eyesBeam[i]=100/distret;
+        CC.in_eyesBeam[i]=-100/distret;
       }
       else
       {
@@ -553,8 +580,12 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     CC.in_currentSpeed=speedAbs/2;
     rotation_speed((0.3+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
     turnX+=CC.ou_turnSpeed;
-    if(turnX>10||turnX<-10)
-      CC.in_energy-=0.0001;
+    
+    if(turnX>20||turnX<-20)
+    {
+      
+      CC.in_energy-=0.00000001*turnX*turnX;
+    }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
     

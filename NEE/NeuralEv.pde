@@ -5,7 +5,10 @@ class NeuralEv{
   mFixtureEnv env=new mFixtureEnv(860,500);
   mCreatureEv cres[] = new mCreatureEv[35];
   
-  ArrayList <mCreatureEv> honorList=new ArrayList <mCreatureEv>();
+  
+  int honorListsL;
+  ArrayList <mCreatureEv> honorLists=new ArrayList <mCreatureEv>();
+  ArrayList <mCreatureEv> deadList=new ArrayList <mCreatureEv>();
   Draw_s_neuron_net drawNN=new Draw_s_neuron_net();
   
   HistDataDraw memHist[]=new HistDataDraw[10];
@@ -28,6 +31,11 @@ class NeuralEv{
       inHist[i]=new HistDataDraw(50);
       memHist[i]=new HistDataDraw(50);
     }
+    honorListsL=30;
+    for(int i=0;i<honorListsL;i++)
+    {
+      honorLists.add(new mCreatureEv());
+    }
   }
   
   int getMaxFitnessIdx(mCreatureEv cand[])
@@ -48,16 +56,17 @@ class NeuralEv{
     
   }
     
-  void EliminateHornorList(ArrayList <mCreatureEv> SortedList,float eleminatePercent)
+  
+    
+  
+  void GetHornorListTopX(ArrayList <mCreatureEv> SortedList,int topX)
   {
-    int start=(int)(SortedList.size()*(1-eleminatePercent));
+    int start=(int)(topX);
     for(int i=start;i<SortedList.size();i++)
     {
       SortedList.remove(i--);
     }
-  }    
-    
-    
+  }      
     
   mCreatureEv GetGoodFitCre(ArrayList <mCreatureEv> SortedList)
   {
@@ -116,7 +125,7 @@ class NeuralEv{
     //drawNN.drawNN(cre.CC.nn,10,10,550,350);
 
     
-    mCreatureEv parentList[]=new mCreatureEv[1];
+    mCreatureEv parentList[]=new mCreatureEv[3];
     float parentFitness[]=new float[parentList.length];
     for(mCreatureEv cre:cres)
     {
@@ -124,30 +133,41 @@ class NeuralEv{
       {
         if(env.rmCreature(cre))
         {
-          honorList.add(cre);
-        
-          
+          deadList.add(cre);
         }
       }
     }
-    if(honorList.size()==cres.length)
+    if(deadList.size()==cres.length)
     {
       println("DIE out GEN:"+GEN++);
       MaxloopC=60000;
       
-      Collections.sort(honorList);
-      EliminateHornorList(honorList,0.7);
-      for(mCreatureEv dcre:honorList)
+      float minFitnessInHonorList=honorLists.get(honorLists.size()-1).getFitness();
+      
+      for(mCreatureEv dcre:deadList)
       {
-        println("Sur:"+dcre.getFitness());
+        if(minFitnessInHonorList<dcre.getFitness())
+        {
+          honorLists.add(new mCreatureEv(dcre));
+        }
       }
       
-      float maxFitness=honorList.get(0).getFitness();
+      
+      
+      
+      Collections.sort(honorLists);
+      GetHornorListTopX(honorLists,honorListsL);
+      for(mCreatureEv dcre:honorLists)
+      {
+        println("Top:"+dcre.getFitness());
+      }
+      
+      float maxFitness=honorLists.get(0).getFitness();
       if(maxFitnessRec<maxFitness)
       {
         maxFitnessRec=maxFitness;
         
-        println("MaxLT::"+maxFitnessRec+"  energy:"+honorList.get(0).CC.in_energy);
+        println("MaxLT::"+maxFitnessRec+"  energy:"+deadList.get(0).CC.in_energy);
       }
       
       for(mCreatureEv dcre:cres)
@@ -155,13 +175,13 @@ class NeuralEv{
         {
           for(int i=0;i<parentList.length;i++)
           {
-            parentList[i]=GetGoodFitCre(honorList);
+            parentList[i]=GetGoodFitCre(honorLists);
             parentFitness[i]=(parentList[i].getFitness());
           }
           dcre.birth(parentList,parentFitness);
         }
       }
-      honorList.clear();
+      deadList.clear();
       for(mCreatureEv dcre:cres)      
       {
         env.addCreature(dcre);
@@ -184,7 +204,7 @@ class NeuralEv{
     cres[0].c=color(180,150,180);
     drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     
-    int NNN=6;
+    int NNN=2;
     int Y=250;
     for(int i=3;i<NNN;i++)
     {

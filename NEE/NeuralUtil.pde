@@ -434,19 +434,6 @@ class s_neuron_net{
     //dZ/dY = Sigmoid(Y)'
     //dY/dW = X
     
-    float sdfsd=0;
-     for (int i=0;i<layer.length;i++) {
-      float dPdZ = layer[i].trainError;
-      for (int j=0;j<layer[i].pre_neuron_L;j++)
-      {
-        System.out.printf("%f,", layer[i].pre_neuron_list[j].trainError);
-       // layer[i].pre_neuron_list[j].trainError=0;
-         
-      }
-     }
-      
-        System.out.printf("\n");
-    
     float lRate=learningRate;
     
     

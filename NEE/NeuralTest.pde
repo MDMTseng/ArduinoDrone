@@ -1,6 +1,6 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,2,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,2});
 
   
 
@@ -177,7 +177,7 @@ void X2(){
   {
     nn.TestTrainRecNN(InX[i],OuY[i],0.5,false,1,0);
   }*/
-  float err=nn.TestTrain(InX,OuY,1,0.9);
+  float err=nn.TestTrain(InX,OuY,25,0.9);
   
   
   
