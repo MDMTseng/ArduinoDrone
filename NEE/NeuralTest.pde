@@ -170,8 +170,6 @@ void X2(){
     
   }
   
-  nn.PreTrainProcess();
-  
   /*for(int i=0;;i++)
   for(int i=0;i<InX.length;i++)
   {
