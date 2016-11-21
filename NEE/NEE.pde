@@ -10,8 +10,8 @@ reCTest reC=new reCTest();
 void draw()
 {
    
-  //nt.X2();
-  nv.draw();
+  nt.X2();
+  //nv.draw();
   //reC.update();
 }
 

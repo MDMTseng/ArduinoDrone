@@ -36,9 +36,9 @@ class mFixture{
     float in_exhustedLevel;
     float in_currentSpeed;
     float in_peerInfo;
-    float in_eyesBeam[]=new float[5];
+    float in_eyesBeam[]=new float[10];
     
-    float inout_mem[]=new float[0];
+    float inout_mem[]=new float[3];
     
     float ou_turnSpeed;
     float ou_speedAdj;
@@ -429,6 +429,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   float turnX=0;
   float speeUpC=0;
   int seeOtherC=0;
+  int HitMark=0;
   
   public int compareTo(mCreatureEv other) {
       return Float.compare(other.getFitness(),getFitness());// name.compareTo(other.name);
@@ -477,6 +478,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     speeUpC=0;
     CC.in_energy=0.5;
     size=10;
+    HitMark=0;
   }
   
   void birth(mCreatureEv parents[],float fitness[])
@@ -487,8 +489,8 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       nn_parents[i]=parents[i].CC.nn;
     }
     CC.nn.GeneticCrossNN(nn_parents,fitness);
-    CC.nn.AddNNNoise(0.01);
-    if(random(0,1)>0.8)CC.nn.AddNNmutate(0.1);
+    if(random(0,1)>0.5)CC.nn.AddNNNoise(0.03);
+    if(random(0,1)>0.7)CC.nn.AddNNmutate(0.1);
     CC.nn.PreTrainProcess();
     revive();
     
@@ -503,12 +505,12 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     if((collideObj instanceof mCreatureEv) )
     {
       CC.in_energy-=0.002*mag;
-      mCreatureEv obj=((mCreatureEv)collideObj);
-      obj.CC.in_energy+=0.002*mag;
+      HitMark+=20;
     }
     else
     {
-      CC.in_energy-=0.01*mag;
+      CC.in_energy-=0.03*mag;
+      HitMark=255;
     }
       
   }
@@ -528,7 +530,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     lifeTime++;
     
     
-    float spreadAngle=20;
+    float spreadAngle=100/CC.in_eyesBeam.length;
     PVector ret_intersect=new PVector();
     float speedAngle=atan2(speed.y,speed.x)-spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
     
@@ -554,7 +556,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
         collideCre.CC.in_peerInfo+=CC.ou_sendInfo/distret;
         
         //collideCre.CC.in_energy+=0.001/distret;
-        CC.in_energy+=0.003/distret;
+        CC.in_energy+=0.01/distret/CC.in_eyesBeam.length;
         CC.in_eyesBeam[i]=-100/distret;
       }
       else
@@ -567,7 +569,6 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
    // CC.in_energy*=0.95;
     //if(CC.in_energy>1)CC.in_energy=1;
     CC.in_peerInfo*=0.9;
-    //CC.in_energy-=CC.in_peerInfo*0.000001;
     CC.UpdateNeuronInput();
     
     
@@ -581,17 +582,16 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     rotation_speed((0.3+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
     turnX+=CC.ou_turnSpeed;
     
-    if(turnX>20||turnX<-20)
     {
-      
-      CC.in_energy-=0.00000001*turnX*turnX;
+      float absTurnX=(turnX>0)?turnX:-turnX;
+      CC.in_energy-=0.0000001*absTurnX;
     }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
     
-    if(CC.in_energy>0.8&&random(0,1)>0.8){
+    if(CC.in_energy>0.8&&random(0,1)>0.8&&HitMark==0){
       //println("Hit:"+preFiness);
-      CC.BoostingTraining(0.3);
+      CC.BoostingTraining(0.2);
     }
    
       
@@ -602,7 +602,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     else if(speedAbs<0.5)
       speed.mult(random(1.1,1.2));
 
-    
+    lifeTime+=speed.mag()/5;
     pos.add(speed);
   }
   void draw(float offsetX,float offsetY)
@@ -617,7 +617,15 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     line(pos.x+offsetX,-pos.y+offsetY,pos.x+5*speed.x+offsetX,-(pos.y+5*speed.y)+offsetY );
     
     noFill();
-    arc(pos.x+offsetX,-pos.y+offsetY, size+2, size+2, 0, 2*CC.in_energy*PI);
+    
+    
+    if(HitMark>0)
+    {
+      stroke(255,50,150);
+      
+    }
+    HitMark=HitMark*13/14;
+    arc(pos.x+offsetX,-pos.y+offsetY,size+2+HitMark/10, size+2+HitMark/10, 0, 2*CC.in_energy*PI);
   }
   
 }

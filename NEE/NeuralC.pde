@@ -65,7 +65,7 @@ class NeuralC{
     cres[0].c=color(180,150,180);
     drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     
-    int NNN=3;
+    int NNN=5;
     int Y=250;
     for(int i=0;i<NNN;i++)
     {
@@ -74,7 +74,6 @@ class NeuralC{
       memHist[i].Draw(cres[0].CC.nn.output[i].latestVar*50,width/2,Y,width/2,300);
       Y+=50;
     }
-      Y+=50;
     stroke(255,255,255);
     inHist[0].Draw(cres[0].CC.in_peerInfo*50,width/2,Y,width/2,300);
       Y+=50;

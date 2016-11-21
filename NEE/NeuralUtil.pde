@@ -1,10 +1,48 @@
 
+interface s_neuron_actFunc{
+  public double value(double x) ;
+  
+  public double derivativeOnOutput(double func_var);
+}
+
+class s_neuron_actFunc_tanh implements s_neuron_actFunc{
+  public double value(double x) {
+    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
+  }
+  
+  public double derivativeOnOutput(double func_var) {
+    func_var=(func_var+1)/2;
+    double slop=2*func_var*(1-(func_var));
+    return slop;
+  }
+}
+class s_neuron_actFunc_sigmoid implements s_neuron_actFunc{
+  public double value(double x) {
+    return (1/( 1 + Math.pow(Math.E,(-1*x))));
+  }
+  
+  public double derivativeOnOutput(double func_var) {
+    double slop=func_var*(1-(func_var));
+    return slop;
+  }
+}
+class s_neuron_actFunc_ReLU implements s_neuron_actFunc{
+  public double value(double x) {
+    return (x>0)?x:0.01*x;
+  }
+  
+  public double derivativeOnOutput(double func_var) {
+    return func_var>0? 1:0.01;
+  }
+}
+
+
 class s_neuron{
   public float SumVar;
   public float latestVar;
   public float trainError;
   
-  
+  s_neuron_actFunc actFun=null;
   public int post_neuron_L;
   public s_neuron post_neuron_list[];
   public float W[];
@@ -15,18 +53,25 @@ class s_neuron{
   public s_neuron pre_neuron_list[];
     
     
-  s_neuron()
+  s_neuron(s_neuron_actFunc actFun)
   {
-    this(0);
+    this(0,actFun);
   }
-  s_neuron(int defaultNum)
+  s_neuron(int defaultNum,s_neuron_actFunc actFun)
   {
+    Set_actFun(actFun);
     pre_neuron_L = 0;
     post_neuron_L = 0;
     pre_neuron_list = new s_neuron[defaultNum];
     post_neuron_list = new s_neuron[defaultNum];
     W = new float[post_neuron_list.length];
     ADss = new float[W.length];
+  }
+  
+
+  void Set_actFun(s_neuron_actFunc actFun)
+  {
+    this.actFun=actFun;
   }
   
   void SetDisable(boolean disable)
@@ -79,7 +124,7 @@ class s_neuron{
     {
       SumVar+=pre_neuron_list[i].latestVar*W[i];
     }
-    latestVar=(float)exciteF(SumVar);
+    latestVar=(float)actFun.value(SumVar);
   }
   
   
@@ -157,19 +202,7 @@ class s_neuron{
     post_neuron_list[post_neuron_L]=post_neuron;//append
     post_neuron_L++;
   }
-  public double exciteF(double x) {
-    return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
-    //return (x>0)?x:0.01*x;
-  }
-  
-  public double d_exciteF(double sigmoid_var) {
-    sigmoid_var=(sigmoid_var+1)/2;
-    double slop=2*sigmoid_var*(1-(sigmoid_var));
-    return (slop+0.02)/1.01;
-    
-    //return sigmoid_var>0? 1:0.01;
-    
-  }
+
 }
 
 class s_neuron_net{
@@ -178,6 +211,9 @@ class s_neuron_net{
   s_neuron input[];
   s_neuron hidden[][];
   s_neuron output[];
+  s_neuron_actFunc actFun_tanh=new s_neuron_actFunc_tanh();
+  s_neuron_actFunc actFun_ReLU=new s_neuron_actFunc_ReLU();
+  s_neuron_actFunc actFun_sigmoid=new s_neuron_actFunc_sigmoid();
   
   float XRand(float x1,float x2)
   {
@@ -188,7 +224,7 @@ class s_neuron_net{
   {
     if(netDim.length<2)
       return;
-    one_offset =  new s_neuron(1); 
+    one_offset =  new s_neuron(1,actFun_tanh); 
     one_offset.latestVar=1;
     
     ns = new ArrayList <s_neuron[]>();
@@ -200,7 +236,7 @@ class s_neuron_net{
     s_neuron currentlayer[]=input;
     for(int i=0;i<currentlayer.length;i++)
     {
-      currentlayer[i] = new s_neuron(1);
+      currentlayer[i] = new s_neuron(1,actFun_ReLU);
     }
     ns.add(currentlayer);
     
@@ -211,7 +247,8 @@ class s_neuron_net{
       
       for(int j=0;j<currentlayer.length;j++)
       {
-        currentlayer[j] = new s_neuron(1);
+        s_neuron_actFunc actFun=(j==netDim.length-1)?actFun_tanh:actFun_tanh;
+        currentlayer[j] = new s_neuron(1,actFun);
         for(int k=0;k<prelayer.length;k++)
         {
           currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
@@ -449,7 +486,7 @@ class s_neuron_net{
      // lRate=limit;//*(random(0.5, 1.1));//(float)Math.log(limit*dropO+1);
       
       
-      float dZdY = crossEn?1:(float)layer[i].d_exciteF(layer[i].latestVar);
+      float dZdY = crossEn?1:(float)layer[i].actFun.derivativeOnOutput(layer[i].latestVar);
       float dPdY = dPdZ*dZdY;
       for (int j=0;j<layer[i].pre_neuron_L;j++)
       {

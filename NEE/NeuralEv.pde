@@ -137,7 +137,7 @@ class NeuralEv{
         }
       }
     }
-    if(deadList.size()==cres.length)
+    if(deadList.size()>=cres.length/10)
     {
       println("DIE out GEN:"+GEN++);
       MaxloopC=60000;
@@ -170,7 +170,7 @@ class NeuralEv{
         println("MaxLT::"+maxFitnessRec+"  energy:"+deadList.get(0).CC.in_energy);
       }
       
-      for(mCreatureEv dcre:cres)
+      for(mCreatureEv dcre:deadList)
       {
         {
           for(int i=0;i<parentList.length;i++)
@@ -181,11 +181,11 @@ class NeuralEv{
           dcre.birth(parentList,parentFitness);
         }
       }
-      deadList.clear();
-      for(mCreatureEv dcre:cres)      
+      for(mCreatureEv dcre:deadList)      
       {
         env.addCreature(dcre);
       }
+      deadList.clear();
     }
     
     for(int i=0;i<simCount;i++)
@@ -204,16 +204,15 @@ class NeuralEv{
     cres[0].c=color(180,150,180);
     drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     
-    int NNN=2;
+    int NNN=4;
     int Y=250;
-    for(int i=3;i<NNN;i++)
+    for(int i=0;i<NNN;i++)
     {
       
       stroke(i*255/NNN,255-i*255/NNN,(180+i*255/NNN)%255);
       memHist[i].Draw(cres[0].CC.nn.output[i].latestVar*50,width/2,Y,width/2,300);
       Y+=50;
     }
-      Y+=50;
     stroke(255,255,255);
     inHist[0].Draw(cres[0].CC.in_peerInfo*50,width/2,Y,width/2,300);
       Y+=50;
