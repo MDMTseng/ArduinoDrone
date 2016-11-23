@@ -319,10 +319,12 @@ class s_neuron_net{
     if(layer[0].pre_neuron_L>2)
     for (int i=0;i<layer.length;i++)
     {
-      if(layer[i].rmsW()<2)continue;
+      if(layer[i].rmsW()<0.7)continue;
       for (int j=i+1;j<layer.length;j++) 
       {
         float CosSim=layer[i].CosSimilarW(layer[j]);
+        int sign=(CosSim>0)?1:-1;
+        if(CosSim<0)CosSim=-CosSim;
         if(CosSim>CosSimValve)
         {
           float tmp=(CosSim-CosSimValve)*(1-CosSimValve);
@@ -332,8 +334,8 @@ class s_neuron_net{
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
             tmp = layer[j].W[k];
-            layer[j].W[k]=tmp*attractAlpha+layer[i].W[k]*(1-attractAlpha);
-            layer[i].W[k]=layer[i].W[k]*attractAlpha+tmp*(1-attractAlpha);
+            layer[j].W[k]=tmp*attractAlpha+layer[i].W[k]*(1-attractAlpha)*sign;
+            layer[i].W[k]=layer[i].W[k]*attractAlpha+tmp*(1-attractAlpha)*sign;
           }
         }
       }
@@ -352,16 +354,22 @@ class s_neuron_net{
       {
         //if(layer[j].rmsW()<1)continue;
         float CosSim=layer[i].CosSimilarW(layer[j]);
+         int sign=1;
+        if(CosSim<0)
+        {
+          CosSim=-CosSim;
+          sign=-1;
+        }
         if(CosSim>CosSimValve)
         {
           //System.out.printf(">>>:%f...\n ",CosSim);
           for (int k=0;k<layer[j].GetActual_pre_neuron_L();k++)
           {
             //System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
-            layer[j].W[k]=(layer[i].W[k]+layer[j].W[k])/2;
-            layer[j].ADss[k]=(layer[j].ADss[k]+layer[i].ADss[k])/2;
+            layer[j].W[k]=(sign*layer[i].W[k]+layer[j].W[k])/2;
+            layer[j].ADss[k]=(layer[i].ADss[k]+layer[j].ADss[k])/2;
             layer[i].W[k]= XRand(0,0.5)/2;
-            //layer[i].ADss[k]=0;
+            layer[i].ADss[k]/=2;
           }
           //System.out.printf("\n ");
           
@@ -376,7 +384,7 @@ class s_neuron_net{
               else if(layer[i]==pnode.pre_neuron_list[m])
                 n2_idx = m;
             }
-            pnode.W[n1_idx]+=pnode.W[n2_idx];
+            pnode.W[n1_idx]+=pnode.W[n2_idx]*sign;
             pnode.W[n2_idx]=0;
             pnode.ADss[n2_idx]=5;
           }
@@ -455,7 +463,7 @@ class s_neuron_net{
     for (int i=this.ns.size()-2;i!=1;i--)
     {
       s_neuron layer[]=this.ns.get(i);
-      SupressL2(layer,0.002/layer.length);
+      SupressL2(layer,0.003/layer.length);
       SupressL1X(layer,0.0003/layer.length);
     }
     
@@ -624,7 +632,8 @@ class s_neuron_net{
     float aveErrC=0;
 
     for(int i=0;i<iter;i++)
-    {PreTrainProcess();
+    {
+      PreTrainProcess();
       for(int j=0;j<InXSet.length;j++)
       {
         aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn);
