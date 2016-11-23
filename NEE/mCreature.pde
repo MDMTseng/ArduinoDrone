@@ -211,7 +211,7 @@ class mFixture{
       for(int i=0;i<memLoopTrain;i++)
       {
         
-       // nn.PreTrainProcess();
+        nn.PreTrainProcess();
         /*for(int j=0;j<iter;j++)
         {
           for(int k=0;k<InX.length;k++)
