@@ -230,7 +230,7 @@ void X2(){
   }*/
   
   boolean crossEn=false;
-  float lrate=0.5;
+  float lrate=0.1;
   if(random(0,1)>0.99999)
   {
     crossEn=true;
@@ -248,7 +248,7 @@ void X2(){
   
   //if(1.0*successCount/InX.length>0.80)
     scrollingCount+=scrollingSpeed;
-  SRateHist.Draw(100.0*(1-1.0*successCount/InX.length),0,700,width,100);
+  SRateHist.Draw(sqrt(nn.hidden[2][3].ADss[5])*50,0,700,width,100);
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
 }

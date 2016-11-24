@@ -125,7 +125,7 @@ class NeuralEv{
     //drawNN.drawNN(cre.CC.nn,10,10,550,350);
 
     
-    mCreatureEv parentList[]=new mCreatureEv[3];
+    mCreatureEv parentList[]=new mCreatureEv[2];
     float parentFitness[]=new float[parentList.length];
     for(mCreatureEv cre:cres)
     {
@@ -137,7 +137,7 @@ class NeuralEv{
         }
       }
     }
-    if(deadList.size()>=cres.length/10)
+    if(deadList.size()>=1)
     {
       println("DIE out GEN:"+GEN++);
       MaxloopC=60000;

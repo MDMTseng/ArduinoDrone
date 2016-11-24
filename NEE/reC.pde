@@ -1,11 +1,11 @@
  class reC
   {
     float in_X;
-    float inout_mem[]=new float[1];
+    float inout_mem[]=new float[3];
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,25,25,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,1+inout_mem.length});
     float InX[][]=new float[1][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -64,23 +64,7 @@
       }
     }
    
-    void BoostingTraining(float alpha)//+ for reward
-    {
-      int rIdx=InoutIdx;
-      for(int i=0;i<InX.length;i++)
-      {
-          for(int j=0;j<InX[i].length;j++)
-          {
-            InX[rIdx][j]+=random(-alpha,alpha);
-          }
-          
-          rIdx--;
-          if(rIdx<0)rIdx+=InX.length;
-      }
-      
-      
-      training(InX,OuY,1,0.1);
-    }
+
     float training(float InX[][],float OuY[][],int iter,float lRate)
     {
       float memLoopTrain=1;
@@ -88,13 +72,10 @@
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess();
-        for(int j=0;j<iter;j++)
+        nn.PreTrainProcess(lRate);
+        for(int k=0;k<InX.length;k++)
         {
-          for(int k=0;k<InX.length;k++)
-          {
-            nn.TestTrainRecNN(InX[j],OuY[j],lRate,false,1,inout_mem.length);
-          }
+          nn.TestTrainRecNN(InX[k],OuY[k],lRate,false,iter,inout_mem.length);
         }
       }
       
@@ -104,11 +85,8 @@
     
     float training(float InX[],float OuY[],int iter,float lRate)
     {
-      nn.PreTrainProcess();
-      for(int j=0;j<iter;j++)
-      {
-          nn.TestTrainRecNN(InX,OuY,lRate,false,5,inout_mem.length);
-      }
+      nn.PreTrainProcess(lRate);
+      nn.TestTrainRecNN(InX,OuY,lRate,false,iter,inout_mem.length);
       
       return  0;
     }
@@ -121,12 +99,7 @@
     } 
     float training(int iter,float lRate)
     {
-      nn.PreTrainProcess();
-      for(int j=0;j<iter;j++)
-      {
-          nn.TestTrain(InX,OuY, 1, lRate);
-      }
-      
+          training(InX,OuY, iter, lRate);
       return  0;
     }
   }
@@ -148,11 +121,13 @@
     {
       for(int i=0;i<InX.length;i++)InX[i]=0;
       for(int i=0;i<OuY.length;i++)OuY[i]=0;
+      for(int i=0;i<MEMHist.length;i++)MEMHist[i]=new HistDataDraw(100);
     }
     
 
     HistDataDraw TarHist=new HistDataDraw(100);
     HistDataDraw OutHist=new HistDataDraw(100);
+    HistDataDraw MEMHist[]=new HistDataDraw[rec.inout_mem.length];
     
     boolean trainStop=false;
     float t=1;
@@ -160,12 +135,12 @@
     {
       strokeWeight(3);
       background(0);
-      if(!trainStop)
+      //if(!trainStop)
         t+=0.05;
       InX[0]=(t%(1))*2-1;
-      OuY[0]=sin(t*2*PI);
+      OuY[0]=sin(t*2*PI)>0?1:-1;
       
-      rec.in_X=InX[0];
+      rec.in_X=0;
       rec.UpdateNeuronInput();
       rec.SetOuY(OuY);
       drawNN.drawNN(rec.nn,10,10,550,350);
@@ -173,6 +148,9 @@
       TarHist.Draw(OuY[0]*50,0,600,width,100);
       stroke(255,255,0);
       OutHist.Draw(rec.ou_Y*50,0,600,width,100);
+      stroke(255,0,0);
+      for(int i=0;i<MEMHist.length;i++)
+        MEMHist[i].Draw(rec.inout_mem[i]*50,0,200+i*100,width,100);
       if(!trainStop)
         rec.training(10,0.1);
     }

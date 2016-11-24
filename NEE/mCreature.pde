@@ -44,7 +44,7 @@ class mFixture{
     float ou_speedAdj;
     float ou_sendInfo;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,5,5,5,3+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,5,10,10,3+inout_mem.length});
     float InX[][]=new float[20][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -190,11 +190,11 @@ class mFixture{
     void BoostingTraining(float alpha)//+ for reward
     {
       int rIdx=InoutIdx;
-      for(int i=0;i<InX.length;i++)
+      for(int i=0;i<OuY.length;i++)
       {
-          for(int j=0;j<InX[i].length;j++)
+          for(int j=0;j<OuY[i].length;j++)
           {
-            InX[rIdx][j]+=random(-alpha,alpha);
+            OuY[rIdx][j]+=random(-alpha,alpha);
           }
           
           rIdx--;
@@ -202,7 +202,7 @@ class mFixture{
       }
       
       
-      training(InX,OuY,1,0.1);
+      training(InX,OuY,1,0.5);
     }
     float training(float InX[][],float OuY[][],int iter,float lRate)
     {
@@ -211,7 +211,7 @@ class mFixture{
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess();
+        nn.PreTrainProcess(lRate);
         /*for(int j=0;j<iter;j++)
         {
           for(int k=0;k<InX.length;k++)
@@ -491,7 +491,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     CC.nn.GeneticCrossNN(nn_parents,fitness);
     if(random(0,1)>0.5)CC.nn.AddNNNoise(0.03);
     if(random(0,1)>0.7)CC.nn.AddNNmutate(0.1);
-    CC.nn.PreTrainProcess();
+    CC.nn.PreTrainProcess(0.1);
     revive();
     
   }
@@ -557,7 +557,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
         
         //collideCre.CC.in_energy+=0.001/distret;
         CC.in_energy+=0.01/distret/CC.in_eyesBeam.length;
-        CC.in_eyesBeam[i]=-100/distret;
+        CC.in_eyesBeam[i]=100/distret;
       }
       else
       {
@@ -591,7 +591,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     
     if(CC.in_energy>0.8&&random(0,1)>0.8&&HitMark==0){
       //println("Hit:"+preFiness);
-      CC.BoostingTraining(0.2);
+      CC.BoostingTraining(0.5);
     }
    
       
