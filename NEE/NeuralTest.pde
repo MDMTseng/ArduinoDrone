@@ -1,6 +1,6 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,15,5,15,5,15,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,2});
 
   
 
@@ -43,7 +43,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
   }
   
   
-  for(int i=0;i<0*InX.length;i++)
+  for(int i=0;i<InX.length;i++)
   {
     int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX.length);
     float tmp;
@@ -66,6 +66,59 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
 }
 
 
+void InXOuYSetUp2(float n,float InX[][],float OuY[][])
+{
+  
+  float freqX=sin(n)*2;
+  
+  for(int i=0;i<InX.length/2;i++)
+  {
+      float x,y;
+      float t=(InX.length/2-i+1)*1.0/InX.length;
+      x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
+      y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
+      InX[i][0]=x;
+      InX[i][1]=y;
+      
+      OuY[i][0]=1;
+      OuY[i][1]=-1;
+  }
+  
+  for(int i=InX.length/2;i<InX.length;i++)
+  {
+      float x,y;
+      float t=(i-InX.length/2)*1.0/InX.length;
+      x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t;
+      y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t;
+      InX[i][0]=x;
+      InX[i][1]=y;
+      
+      OuY[i][0]=-1;
+      OuY[i][1]=1;
+  }
+  
+  
+  for(int i=0;i<InX.length;i++)
+  {
+    int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX.length);
+    float tmp;
+    tmp=InX[i][0];
+    InX[i][0]=InX[swapIdx][0];
+    InX[swapIdx][0]=tmp;
+    tmp=InX[i][1];
+    InX[i][1]=InX[swapIdx][1];
+    InX[swapIdx][1]=tmp;
+    
+    tmp=OuY[i][0];
+    OuY[i][0]=OuY[swapIdx][0];
+    OuY[swapIdx][0]=tmp;
+    
+    tmp=OuY[i][1];
+    OuY[i][1]=OuY[swapIdx][1];
+    OuY[swapIdx][1]=tmp;
+  }
+    
+}
 
 void InXOuYAddNoise(float InX[][],float OuY[][],float Noise)
 {
@@ -105,7 +158,7 @@ void X2(){
   if(CCC%1==0)
     InXOuYSetUp1(scrollingCount,InX,OuY);
   CCC++;
-  //InXOuYAddNoise(InX,OuY,0.005);
+ //InXOuYAddNoise(InX,OuY,0.03);
   
   
   drawNN.drawNN(nn,10,10,550,350);
@@ -175,7 +228,17 @@ void X2(){
   {
     nn.TestTrainRecNN(InX[i],OuY[i],0.5,false,1,0);
   }*/
-  float err=nn.TestTrain(InX,OuY,25,0.1,false);
+  
+  boolean crossEn=false;
+  float lrate=0.5;
+  if(random(0,1)>0.99999)
+  {
+    crossEn=true;
+    lrate=0.01;
+  }
+  
+  
+  float err=nn.TestTrain(InX,OuY,25,lrate,crossEn);
   
   
   
@@ -185,7 +248,7 @@ void X2(){
   
   //if(1.0*successCount/InX.length>0.80)
     scrollingCount+=scrollingSpeed;
-  SRateHist.Draw(100.0*successCount/InX.length,0,700,width,100);
+  SRateHist.Draw(100.0*(1-1.0*successCount/InX.length),0,700,width,100);
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
 }
