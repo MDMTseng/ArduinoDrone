@@ -1,6 +1,6 @@
 class NeuralTest{
 
-s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,10,2});
+s_neuron_net nn = new s_neuron_net(new int[]{2,10,10,10,10,2});
 
   
 
@@ -231,12 +231,6 @@ void X2(){
   
   boolean crossEn=false;
   float lrate=0.1;
-  if(random(0,1)>0.99999)
-  {
-    crossEn=true;
-    lrate=0.01;
-  }
-  
   
   float err=nn.TestTrain(InX,OuY,25,lrate,crossEn);
   
@@ -248,7 +242,7 @@ void X2(){
   
   //if(1.0*successCount/InX.length>0.80)
     scrollingCount+=scrollingSpeed;
-  SRateHist.Draw(sqrt(nn.hidden[2][3].ADss[5])*50,0,700,width,100);
+  SRateHist.Draw(sqrt(nn.hidden[1][3].ADss[5])*50,0,700,width,100);
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
 }

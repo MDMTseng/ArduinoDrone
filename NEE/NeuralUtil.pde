@@ -47,6 +47,7 @@ class s_neuron{
   public s_neuron post_neuron_list[];
   public float W[];
   public float ADss[];
+  public float LPW[];
   
   public int pre_neuron_L_BK;
   public int pre_neuron_L;
@@ -66,6 +67,7 @@ class s_neuron{
     post_neuron_list = new s_neuron[defaultNum];
     W = new float[post_neuron_list.length];
     ADss = new float[W.length];
+    LPW = new float[W.length];
   }
   
 
@@ -100,6 +102,7 @@ class s_neuron{
       W = new float[pre_neuron_list.length];//extend L
       
       ADss = new float[W.length];
+      LPW = new float[W.length];
       for(int i=0;i<pre_neuron_L;i++)
       {
         pre_neuron_list[i]=oldList[i];
@@ -416,6 +419,7 @@ class s_neuron_net{
             //System.out.printf("%f,%f  ",layer[j].W[k],layer[i].W[k]);
             layer[j].W[k]=(sign*layer[i].W[k]+layer[j].W[k])/2;
             layer[j].ADss[k]=(layer[i].ADss[k]+layer[j].ADss[k])/2;
+            layer[j].LPW[k]=(layer[i].LPW[k]+layer[j].LPW[k])/2;
             layer[i].W[k]= XRand(0,0.5)/2;
             layer[i].ADss[k]/=2;
           }
@@ -433,6 +437,8 @@ class s_neuron_net{
                 n2_idx = m;
             }
             pnode.W[n1_idx]+=pnode.W[n2_idx]*sign;
+            pnode.ADss[n1_idx]+=pnode.ADss[n2_idx]*sign;
+            pnode.LPW[n1_idx]+=pnode.LPW[n2_idx]*sign;
             pnode.W[n2_idx]=0;
             pnode.ADss[n2_idx]=5;
           }
@@ -565,11 +571,15 @@ class s_neuron_net{
         
         float dX=dPdY*dYdW;//AdaGrad kind of
         layer[i].ADss[j]+=dX*dX;
+        
         float sqrtAdss=sqrt(layer[i].ADss[j]);
-        layer[i].W[j]+=lRate*dX/(sqrtAdss+0.001);
-        dX=sqrtAdss/3;
-        if(dX>1)dX=1;
-        dX=dX*0.00007;
+        //if(layer[i].LPW[j]*dX<0)layer[i].LPW[j]=0;
+          
+        layer[i].LPW[j]=layer[i].LPW[j]*0.9+dX*0.1;
+        
+        layer[i].W[j]+=lRate*layer[i].LPW[j]/(sqrtAdss+0.001);
+        dX=(dX<0)?-dX:dX;;
+        dX=dX*0.001;
         layer[i].ADss[j]*=1-dX;
       }
     }
