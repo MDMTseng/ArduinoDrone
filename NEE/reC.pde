@@ -5,8 +5,8 @@
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,1+inout_mem.length});
-    float InX[][]=new float[1][nn.input.length];
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,15,1+inout_mem.length});
+    float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
   
@@ -23,6 +23,19 @@
       {
         inout_mem[i]=0;
       }
+      for(int i=0;i<InX.length;i++)
+        for(int j=0;j<InX[i].length;j++)
+      {
+        InX[i][j]=0;
+      }
+      
+      
+      for(int i=0;i<OuY.length;i++)
+        for(int j=0;j<OuY[i].length;j++)
+      {
+        OuY[i][j]=0;
+      }
+      InoutIdx=InX.length-1;
     }
     
     
@@ -46,60 +59,61 @@
         InX[InoutIdx][i++]=inout_mem[j];
       }
       
+      //print("II:::\n");
+      
+      
       for(int j=0;j<InX[InoutIdx].length;j++)
       {
         nn.input[j].latestVar=InX[InoutIdx][j];
+        //print(nn.input[j].latestVar+"   ");
       }
       nn.calc();
-      
+     // print("\nOO:::\n");
       for(int j=0;j<OuY[InoutIdx].length;j++)
       {
         OuY[InoutIdx][j]=nn.output[j].latestVar;
+        
+       // print(OuY[InoutIdx][j]+"   ");
       }
+     // print("\n");
+      
+      
+      
       i=0;
       ou_Y=OuY[InoutIdx][i++];
       for(int j=0;j<inout_mem.length;j++)
       {
-        inout_mem[j]=OuY[InoutIdx][i++];
+        inout_mem[j]=OuY[InoutIdx][i+j];
       }
+      i+=inout_mem.length;
     }
    
 
-    float training(float InX[][],float OuY[][],int iter,float lRate)
+    float training(float InX[][],float OuY[][],int timeback,float lRate)
     {
       float memLoopTrain=1;
       
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess(lRate);
-        for(int k=0;k<InX.length;k++)
-        {
-          nn.TestTrainRecNN(InX[k],OuY[k],lRate,false,iter,inout_mem.length);
-        }
+        nn.PreTrainProcess(lRate/2);
+        nn.TestTrainRecNNx(InX,OuY,InoutIdx,timeback,lRate,false,inout_mem.length);
       }
       
       return  0;
     }
     
-    
-    float training(float InX[],float OuY[],int iter,float lRate)
-    {
-      nn.PreTrainProcess(lRate);
-      nn.TestTrainRecNN(InX,OuY,lRate,false,iter,inout_mem.length);
-      
-      return  0;
-    }
    void SetOuY(float ouY[])
     {
-      for(int i=0;i<ouY.length;i++)
+      for(int i=0;i<ouY.length-inout_mem.length;i++)
       {
         OuY[InoutIdx][i]=ouY[i];
+        
       }
     } 
-    float training(int iter,float lRate)
+    float training(int timeback,float lRate)
     {
-          training(InX,OuY, iter, lRate);
+          training(InX,OuY,timeback, lRate);
       return  0;
     }
   }
@@ -127,32 +141,72 @@
 
     HistDataDraw TarHist=new HistDataDraw(100);
     HistDataDraw OutHist=new HistDataDraw(100);
+    HistDataDraw InHist=new HistDataDraw(100);
     HistDataDraw MEMHist[]=new HistDataDraw[rec.inout_mem.length];
     
     boolean trainStop=false;
     float t=1;
+    
+    int SKIPC=0;
+    
+    int spikePos=5;
     void update()
     {
+      //if(SKIPC++%2!=0)return;
       strokeWeight(3);
       background(0);
       //if(!trainStop)
-        t+=0.05;
-      InX[0]=(t%(1))*2-1;
-      OuY[0]=sin(t*2*PI)>0?1:-1;
+      int seqL=30;
       
-      rec.in_X=0;
-      rec.UpdateNeuronInput();
-      rec.SetOuY(OuY);
-      drawNN.drawNN(rec.nn,10,10,550,350);
+      if(SKIPC++%100==0)
+      {
+        spikePos+=1;
+        spikePos%=(seqL-5);
+      }
+      rec.init();
+      OuY[0]=0;
+      //InX[0]=(t%(1))*2-1;
+      t=0;
+      for(int i=0;i<seqL;i++)
+      {
+        
+        t+=0.1;
+        rec.in_X=i==(spikePos)?1:-1;
+        if(rec.in_X==1)OuY[0]=1;
+        else OuY[0]/=-1.2;
+        //OuY[0]=i==(spikePos+3)?1:-1;
+        rec.UpdateNeuronInput();
+        rec.SetOuY(OuY);
+        TarHist.DataPush(OuY[0]*50);
+        OutHist.DataPush(rec.ou_Y*50);
+        InHist.DataPush(rec.in_X*50);
+        
+        for(int j=0;j<MEMHist.length;j++)
+          MEMHist[j].DataPush(rec.inout_mem[j]*10);
+      }
+      
       stroke(0,255,0);
-      TarHist.Draw(OuY[0]*50,0,600,width,100);
+      TarHist.Draw(0,600,width,100);
+      
       stroke(255,255,0);
-      OutHist.Draw(rec.ou_Y*50,0,600,width,100);
+      OutHist.Draw(0,600,width,100);
+      stroke(255,255,0);
+      InHist.Draw(0,500,width,100);
+      
+      
       stroke(255,0,0);
       for(int i=0;i<MEMHist.length;i++)
-        MEMHist[i].Draw(rec.inout_mem[i]*50,0,200+i*100,width,100);
+        MEMHist[i].Draw(0,200+i*20,width,100);
+      
+      
+      drawNN.drawNN(rec.nn,10,10,550,350);
+      
       if(!trainStop)
-        rec.training(10,0.1);
+        rec.training(seqL,0.1);
+      
+      
+      
+      
     }
     void keyPressed()
     {

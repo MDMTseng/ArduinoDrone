@@ -42,27 +42,7 @@ void InXOuYSetUp1(float n,float InX[][],float OuY[][])
       OuY[i][1]=1;
   }
   
-  
-  for(int i=0;i<InX.length;i++)
-  {
-    int swapIdx=(int)Math.floor(random(0,1-0.0001)*InX.length);
-    float tmp;
-    tmp=InX[i][0];
-    InX[i][0]=InX[swapIdx][0];
-    InX[swapIdx][0]=tmp;
-    tmp=InX[i][1];
-    InX[i][1]=InX[swapIdx][1];
-    InX[swapIdx][1]=tmp;
-    
-    tmp=OuY[i][0];
-    OuY[i][0]=OuY[swapIdx][0];
-    OuY[swapIdx][0]=tmp;
-    
-    tmp=OuY[i][1];
-    OuY[i][1]=OuY[swapIdx][1];
-    OuY[swapIdx][1]=tmp;
-  }
-    
+
 }
 
 
@@ -75,8 +55,8 @@ void InXOuYSetUp2(float n,float InX[][],float OuY[][])
   {
       float x,y;
       float t=(InX.length/2-i+1)*1.0/InX.length;
-      x=(float)sin((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
-      y=(float)cos((float)(t*Math.PI*(8*freqX)+3.1+n))*t;
+      x=(float)sin((float)(t*Math.PI*15+n))*t-0.1;
+      y=(t-0.25)*2;
       InX[i][0]=x;
       InX[i][1]=y;
       
@@ -88,8 +68,8 @@ void InXOuYSetUp2(float n,float InX[][],float OuY[][])
   {
       float x,y;
       float t=(i-InX.length/2)*1.0/InX.length;
-      x=(float)sin((float)(t*Math.PI*(8*freqX)+n))*t;
-      y=(float)cos((float)(t*Math.PI*(8*freqX)+n))*t;
+      x=-(float)sin((float)(t*Math.PI*15+3.14159+n))*t+0.1;
+      y=(t-0.25)*2;
       InX[i][0]=x;
       InX[i][1]=y;
       
@@ -97,6 +77,10 @@ void InXOuYSetUp2(float n,float InX[][],float OuY[][])
       OuY[i][1]=1;
   }
   
+}
+
+void InXOuYRandomOrder(float InX[][],float OuY[][])
+{
   
   for(int i=0;i<InX.length;i++)
   {
@@ -119,7 +103,6 @@ void InXOuYSetUp2(float n,float InX[][],float OuY[][])
   }
     
 }
-
 void InXOuYAddNoise(float InX[][],float OuY[][],float Noise)
 {
   for(int i=0;i<InX.length;i++)
@@ -134,7 +117,7 @@ float scrollingSpeed=0.0005*0;
 
 
 int TrainCount=0;
-float scrollingCount=-0.55;
+float scrollingCount=-0.75;
 
 
 HistDataDraw ErrHist=new HistDataDraw(1500);
@@ -158,8 +141,8 @@ void X2(){
   if(CCC%1==0)
     InXOuYSetUp1(scrollingCount,InX,OuY);
   CCC++;
- //InXOuYAddNoise(InX,OuY,0.03);
-  
+ //InXOuYAddNoise(InX,OuY,0.02);
+ //InXOuYRandomOrder(InX,OuY); 
   
   drawNN.drawNN(nn,10,10,550,350);
   
@@ -242,7 +225,7 @@ void X2(){
   
   //if(1.0*successCount/InX.length>0.80)
     scrollingCount+=scrollingSpeed;
-  SRateHist.Draw(sqrt(nn.hidden[1][3].ADss[5])*50,0,700,width,100);
+  SRateHist.Draw(sqrt(nn.hidden[1][3].ADss[5])*20,0,700,width,100);
   TrainCount+=25;
   //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
 }
