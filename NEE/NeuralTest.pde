@@ -215,7 +215,7 @@ void X2(){
   boolean crossEn=false;
   float lrate=0.1;
   
-  float err=nn.TestTrain(InX,OuY,25,lrate,crossEn);
+  float err=nn.TestTrain(InX,OuY,25,lrate);
   
   
   

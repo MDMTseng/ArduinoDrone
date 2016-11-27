@@ -5,7 +5,7 @@
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,15,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,10,10,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -96,7 +96,7 @@
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess(lRate/2);
+        //nn.PreTrainProcess(lRate);
         nn.TestTrainRecNNx(InX,OuY,InoutIdx,timeback,lRate,false,inout_mem.length);
       }
       
@@ -142,6 +142,7 @@
     HistDataDraw TarHist=new HistDataDraw(100);
     HistDataDraw OutHist=new HistDataDraw(100);
     HistDataDraw InHist=new HistDataDraw(100);
+    HistDataDraw ADssHist=new HistDataDraw(100);
     HistDataDraw MEMHist[]=new HistDataDraw[rec.inout_mem.length];
     
     boolean trainStop=false;
@@ -156,9 +157,9 @@
       strokeWeight(3);
       background(0);
       //if(!trainStop)
-      int seqL=30;
+      int seqL=10;
       
-      if(SKIPC++%100==0)
+      if(SKIPC++%5==0)
       {
         spikePos+=1;
         spikePos%=(seqL-5);
@@ -173,7 +174,7 @@
         t+=0.1;
         rec.in_X=i==(spikePos)?1:-1;
         if(rec.in_X==1)OuY[0]=1;
-        else OuY[0]/=-1.2;
+        else OuY[0]/=1.5;
         //OuY[0]=i==(spikePos+3)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);
@@ -193,7 +194,9 @@
       stroke(255,255,0);
       InHist.Draw(0,500,width,100);
       
-      
+      stroke(255,255,255);
+      ADssHist.Draw(rec.nn.hidden[0][1].ADss[2]*10,0,700,width,100);
+      // println(rec.nn.hidden[0][1].ADss[2]);
       stroke(255,0,0);
       for(int i=0;i<MEMHist.length;i++)
         MEMHist[i].Draw(0,200+i*20,width,100);
@@ -202,7 +205,7 @@
       drawNN.drawNN(rec.nn,10,10,550,350);
       
       if(!trainStop)
-        rec.training(seqL,0.1);
+        rec.training(seqL,0.2);
       
       
       

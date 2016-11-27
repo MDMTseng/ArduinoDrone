@@ -13,7 +13,7 @@ class s_neuron_actFunc_tanh implements s_neuron_actFunc{
   public double derivativeOnOutput(double func_var) {
     func_var=(func_var+1)/2;
     double slop=2*func_var*(1-(func_var));
-    return slop;
+    return (slop+0.002)/1.001;
   }
 }
 class s_neuron_actFunc_sigmoid implements s_neuron_actFunc{
@@ -94,6 +94,18 @@ class s_neuron{
   {
     return pre_neuron_L_BK;
   }
+  
+  
+  void Update_dW(float alpha)
+  {
+    for(int i=0;i<GetActual_pre_neuron_L();i++)
+    {
+      W[i]+=dW[i]*alpha;
+      dW[i]=0;
+    }
+  }
+  
+  
   void add_pre_neuron(s_neuron pre_neuron,float weight)
   {
     if(pre_neuron_list.length<(pre_neuron_L+1))
@@ -250,13 +262,13 @@ class s_neuron_net{
       prelayer=currentlayer;
       currentlayer=new s_neuron[netDim[i]];
       
+      s_neuron_actFunc actFun=(i==netDim.length-1)?actFun_tanh:actFun_tanh;
       for(int j=0;j<currentlayer.length;j++)
       {
-        s_neuron_actFunc actFun=(j==netDim.length-1)?actFun_tanh:actFun_tanh;
         currentlayer[j] = new s_neuron(1,actFun);
         for(int k=0;k<prelayer.length;k++)
         {
-          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
+          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*0.00001);
         }
         currentlayer[j].add_pre_neuron(one_offset ,XRand(0,0.5));
       }
@@ -275,7 +287,7 @@ class s_neuron_net{
   
   
     
-  void NeuronNodeRevive(s_neuron layer[],float maxW_threshold)
+  void NeuronNodeRevive(s_neuron layer[],float maxW_threshold,float growthSpeed)
   {
     for (int i=0;i<layer.length;i++)
     {
@@ -286,15 +298,15 @@ class s_neuron_net{
       for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++) 
       {
         float d=layer[i].W[j];
-        layer[i].W[j]*=1.02;
-        d=d*d;
+        layer[i].W[j]*=growthSpeed;
+        /*d=d*d;
         if(maxWIdx<d)
         {
           maxW=d;
           maxWIdx=j;
-        }
+        }*/
       }
-      layer[i].W[maxWIdx]/=1.02;
+      //layer[i].W[maxWIdx]/=1.02;
     }
     
   }
@@ -532,7 +544,7 @@ class s_neuron_net{
       AttractSimNode2(layer,0.80,0.002*rate);
       TrimSimNode(layer,0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
-      NeuronNodeRevive(layer,0.8);
+      NeuronNodeRevive(layer,0.8,1+rate/100);
     }
   }
   
@@ -575,15 +587,18 @@ class s_neuron_net{
         float dX=dPdY*dYdW;//AdaGrad kind of
         layer[i].ADss[j]+=dX*dX;
         
+        //if(layer[i].ADss[j]>100)layer[i].ADss[j]=100;
         float sqrtAdss=sqrt(layer[i].ADss[j]);
         //if(layer[i].LPW[j]*dX<0)layer[i].LPW[j]=0;
-          
-        layer[i].LPW[j]=layer[i].LPW[j]*0.9+dX*0.1;
+        layer[i].LPW[j]=dX;//layer[i].LPW[j]*0.5+dX*0.5;
+
         
-        layer[i].W[j]+=lRate*layer[i].LPW[j]/(sqrtAdss+0.001);
+        layer[i].dW[j]+=lRate*layer[i].LPW[j]/(sqrtAdss+0.001);
+        
+       //print(layer[i].ADss[j]+">>>>");
         dX*=dX;
         if(dX>1)dX=1;
-        dX=(dX+0.0001)*0.01;
+        dX=(dX+0.001)*0.01;
         layer[i].ADss[j]*=1-dX;
       }
     }
@@ -613,7 +628,19 @@ class s_neuron_net{
     
   }
   
-  void Train_S(float lRate,boolean crossEn)
+  
+  void Update_dW(float alpha)
+  {
+    for (s_neuron[] layer: this.ns)
+    {
+      for (s_neuron node:layer)
+      {
+        node.Update_dW(alpha);
+      }
+    }
+  }
+  
+  void Train_S(float lRate,boolean crossEn,boolean update_dW)
   {
     // softMax();
     
@@ -621,8 +648,9 @@ class s_neuron_net{
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       Train_1(this.ns.get(i),crossEn&&(i==this.ns.size()-1),lRate);
+      if(update_dW)
+        Update_dW(1.0);
     }
-    
   }
   
   
@@ -678,27 +706,29 @@ class s_neuron_net{
   
   float TestTrain(float InXSet[][],float OuYSet[][],int iter,float lRate)
   {
-    return TestTrain( InXSet, OuYSet, iter, lRate, false);
+    return TestTrain( InXSet, OuYSet, iter, lRate, false,true);
   }
   
-  float TestTrain(float InXSet[][],float OuYSet[][],int iter,float lRate,boolean crossEn)
+  float TestTrain(float InXSet[][],float OuYSet[][],int iter,float lRate,boolean crossEn,boolean update_dW)
   {
     float aveErr=0;
     float aveErrC=0;
-
+    
+    //lRate*=50;
+    //lRate/=1.2;
     for(int i=0;i<iter;i++)
     {
       PreTrainProcess(lRate);
       for(int j=0;j<InXSet.length;j++)
       {
-        aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn);
+        aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn,update_dW);
         aveErrC++;
       }
     }
     
     return aveErr/aveErrC;
   }
-  float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn)
+  float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn,boolean update_dW)
   {
     //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
     
@@ -727,7 +757,7 @@ class s_neuron_net{
     }
     //print("\n");
     float ErrorPow=-calcError();
-    Train_S(lRate,crossEn);
+    Train_S(lRate,crossEn,update_dW);
     
     return ErrorPow;
   }
@@ -739,7 +769,7 @@ class s_neuron_net{
       //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
       
       
-      TestTrain(InX[endIdx],OuY[endIdx],lRate,crossEn);
+      TestTrain(InX[endIdx],OuY[endIdx],lRate,crossEn,false);
       
       //float ErrorPow=-calcError();
 
@@ -793,19 +823,27 @@ class s_neuron_net{
           ixx+=output[output.length-1-k].trainError*output[output.length-1-k].trainError;
         }
         ixx=sqrt(ixx);
+        ixx/=3;
+        if(ixx>1)
+        {
+          for(int k=0;k<memNum;k++)
+          {
+            output[output.length-1-k].trainError/=ixx;
+          }
+          //break;
+        }
         //print(ixx+",");
         /*ixx=sqrt(ixx);
-        for(int k=0;k<memNum;k++)
-        {
-          output[output.length-1-k].trainError/=ixx;
-        }*/
+        */
         //println();
 
         //softMax();
         
-        Train_S(lRate,crossEn);
+        Train_S(lRate,crossEn,false);
+      
         
       }
+      Update_dW(1.0);
       //println();
     }
   
