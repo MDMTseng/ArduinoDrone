@@ -10,9 +10,9 @@ reCTest reC=new reCTest();
 void draw()
 {
    
-  //nt.X2();
+  nt.X2();
   //nv.draw();
-  reC.update();
+  //reC.update();
 }
 
 float scrollingSpeed=0.000;

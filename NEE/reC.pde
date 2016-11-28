@@ -5,7 +5,7 @@
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,10,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -149,7 +149,7 @@
     float t=1;
     
     int SKIPC=0;
-    
+    float lRate=0.1;
     int spikePos=5;
     void update()
     {
@@ -207,7 +207,7 @@
       drawNN.drawNN(rec.nn,10,10,550,350);
       
       if(!trainStop)
-        rec.training(seqL,0.1);
+        rec.training(seqL,lRate);
       
       
       
@@ -218,8 +218,9 @@
       
       if (key == CODED) {
         if (keyCode == UP) {
-         
+         lRate*=1.01;
         } else if (keyCode == DOWN) {
+         lRate/=1.01;
         }
       } else {
         trainStop=!trainStop;
