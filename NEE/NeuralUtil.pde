@@ -13,7 +13,7 @@ class s_neuron_actFunc_tanh implements s_neuron_actFunc{
   public double derivativeOnOutput(double func_var) {
     func_var=(func_var+1)/2;
     double slop=2*func_var*(1-(func_var));
-    return (slop+0.002)/1.001;
+    return (slop);
   }
 }
 class s_neuron_actFunc_sigmoid implements s_neuron_actFunc{
@@ -587,7 +587,7 @@ class s_neuron_net{
         float dX=dPdY*dYdW;//AdaGrad kind of
         layer[i].ADss[j]+=dX*dX;
         
-        //if(layer[i].ADss[j]>100)layer[i].ADss[j]=100;
+        if(layer[i].ADss[j]>100)layer[i].ADss[j]=100;
         float sqrtAdss=sqrt(layer[i].ADss[j]);
         //if(layer[i].LPW[j]*dX<0)layer[i].LPW[j]=0;
         layer[i].LPW[j]=dX;//layer[i].LPW[j]*0.5+dX*0.5;
@@ -823,14 +823,14 @@ class s_neuron_net{
           ixx+=output[output.length-1-k].trainError*output[output.length-1-k].trainError;
         }
         ixx=sqrt(ixx);
-        ixx/=3;
+        ixx/=5;
         if(ixx>1)
         {
           for(int k=0;k<memNum;k++)
           {
             output[output.length-1-k].trainError/=ixx;
           }
-          //break;
+          break;
         }
         //print(ixx+",");
         /*ixx=sqrt(ixx);

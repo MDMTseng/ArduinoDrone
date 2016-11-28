@@ -5,7 +5,7 @@
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,10,10,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,10,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -157,24 +157,26 @@
       strokeWeight(3);
       background(0);
       //if(!trainStop)
-      int seqL=10;
+      int seqL=20;
       
-      if(SKIPC++%5==0)
+      /*if(SKIPC++%5==0)
       {
         spikePos+=1;
         spikePos%=(seqL-5);
-      }
+      }*/
       rec.init();
       OuY[0]=0;
       //InX[0]=(t%(1))*2-1;
+      float outX=0;
       t=0;
       for(int i=0;i<seqL;i++)
       {
         
         t+=0.1;
         rec.in_X=i==(spikePos)?1:-1;
-        if(rec.in_X==1)OuY[0]=1;
-        else OuY[0]/=1.5;
+        if(rec.in_X==1)outX=1;
+        else outX/=1.5;
+        OuY[0]=outX*2-1;
         //OuY[0]=i==(spikePos+3)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);
@@ -205,7 +207,7 @@
       drawNN.drawNN(rec.nn,10,10,550,350);
       
       if(!trainStop)
-        rec.training(seqL,0.2);
+        rec.training(seqL,0.1);
       
       
       
