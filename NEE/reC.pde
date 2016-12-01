@@ -149,8 +149,8 @@
     float t=1;
     
     int SKIPC=0;
-    float lRate=0.1;
-    int spikePos=5;
+    float lRate=0.01;
+    int spikePos=10;
     void update()
     {
       //if(SKIPC++%2!=0)return;
@@ -159,10 +159,11 @@
       //if(!trainStop)
       int seqL=20;
       
-      /*if(SKIPC++%5==0)
+     /* if(SKIPC++%12==0)
       {
         spikePos+=1;
         spikePos%=(seqL-5);
+        if(spikePos==0)spikePos+=2;
       }*/
       rec.init();
       OuY[0]=0;
@@ -176,8 +177,8 @@
         rec.in_X=i==(spikePos)?1:-1;
         if(rec.in_X==1)outX=1;
         else outX/=1.5;
-        OuY[0]=outX*2-1;
-        //OuY[0]=i==(spikePos+3)?1:-1;
+        OuY[0]=outX>0.0001?1:-1;
+        //OuY[0]=i>=(spikePos)&&i<=(spikePos+4)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);
         TarHist.DataPush(OuY[0]*50);
@@ -218,12 +219,13 @@
       
       if (key == CODED) {
         if (keyCode == UP) {
-         lRate*=1.01;
+         lRate*=1.05;
         } else if (keyCode == DOWN) {
-         lRate/=1.01;
+         lRate/=1.05;
         }
       } else {
         trainStop=!trainStop;
       }
+      println(lRate+",");
     } 
   }

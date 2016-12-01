@@ -13,7 +13,7 @@ class s_neuron_actFunc_tanh implements s_neuron_actFunc{
   public double derivativeOnOutput(double func_var) {
     func_var=(func_var+1)/2;
     double slop=2*func_var*(1-(func_var));
-    return (slop);
+    return (slop+0.0002)/1.0001;
   }
 }
 class s_neuron_actFunc_sigmoid implements s_neuron_actFunc{
@@ -32,7 +32,7 @@ class s_neuron_actFunc_ReLU implements s_neuron_actFunc{
   }
   
   public double derivativeOnOutput(double func_var) {
-    return func_var>0? 1:0.01;
+    return func_var>0? 1:0.001;
   }
 }
 
@@ -94,10 +94,17 @@ class s_neuron{
   {
     return pre_neuron_L_BK;
   }
-  
-  
+  float t=1;
   void Update_dW(float learningRate)
   {
+    float beta1=0.9;
+    float beta2=0.98;
+    
+    t+=0.01;
+    
+    float emph=(1-0.9/t);
+    //beta1Pt*=beta1;
+    //beta2Pt*=beta2;
     for(int i=0;i<GetActual_pre_neuron_L();i++)
     {
       
@@ -109,15 +116,16 @@ class s_neuron{
         continue;
       }*/
       //if(node.LPW[j]*dX<0)node.LPW[j]=0;
-      LPW[i]=LPW[i]*0.5+dW[i]*0.5;
-      ADss[i]+=dW[i]*dW[i];
-      float sqrtAdss=sqrt(ADss[i]);
-      W[i]+=LPW[i]*learningRate/(sqrtAdss+0.00001);
-     //print(node.ADss[j]+">>>>");
-      float dW2=dW[i]*dW[i];
-      if(dW2>1)dW2=1;
-      dW2=(dW2+0.001)*0.001;
-      ADss[i]*=1-dW2;
+      
+      
+      
+      LPW[i]=LPW[i]*beta1+dW[i]*(1-beta1);
+      ADss[i]=ADss[i]*beta2+dW[i]*dW[i]*(1-beta2);
+      
+      //float dm=LPW[i]/(1-beta1Pt);
+      //float dv=ADss[i]/(1-beta2Pt);
+      
+      W[i]+=LPW[i]*learningRate/(sqrt(ADss[i])+emph);
       
       dW[i]=0;
     }
@@ -286,7 +294,7 @@ class s_neuron_net{
         currentlayer[j] = new s_neuron(1,actFun);
         for(int k=0;k<prelayer.length;k++)
         {
-          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*0.2);
+          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
         }
         currentlayer[j].add_pre_neuron(one_offset ,XRand(0,0.5));
       }
@@ -316,6 +324,8 @@ class s_neuron_net{
       for (int j=0;j<layer[i].GetActual_pre_neuron_L()-1;j++) 
       {
         float d=layer[i].W[j];
+        
+        layer[i].W[j]+=random(-1,1)*0.00001;
         layer[i].W[j]*=growthSpeed;
         /*d=d*d;
         if(maxWIdx<d)
@@ -817,20 +827,22 @@ class s_neuron_net{
         ixx=0;
         for(int k=0;k<memNum;k++)
         {
-          output[output.length-1-k].trainError=input[input.length-1-k].trainError;
-          ixx+=output[output.length-1-k].trainError*output[output.length-1-k].trainError;
+          float err=input[input.length-1-k].trainError;
+          //if(err>1)err=1;
+          //else if(err<-1)err=-1;
+          output[output.length-1-k].trainError=err;
+          ixx+=err*err;
         }
-        ixx=sqrt(ixx);
-        /*ixx/=5;
-        //if(ixx!=10000)
+        ixx=sqrt(ixx)/memNum;
+        /*ixx/=3;
+        if(ixx>1)
         {
           for(int k=0;k<memNum;k++)
           {
             output[output.length-1-k].trainError/=ixx;
           }
-         // break;
-        }*/
-        println(ixx+",");
+        }
+        println(ixx+",");*/
         /*ixx=sqrt(ixx);
         */
         //println();
