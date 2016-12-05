@@ -142,7 +142,7 @@ void X2(){
     InXOuYSetUp1(scrollingCount,InX,OuY);
   CCC++;
  //InXOuYAddNoise(InX,OuY,0.02);
- //InXOuYRandomOrder(InX,OuY); 
+ InXOuYRandomOrder(InX,OuY); 
   
   drawNN.drawNN(nn,10,10,550,350);
   
@@ -213,7 +213,7 @@ void X2(){
   }*/
   
   boolean crossEn=false;
-  float lrate=0.01;
+  float lrate=0.1;
   
   float err=nn.TestTrain(InX,OuY,25,lrate);
   

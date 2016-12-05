@@ -1,40 +1,54 @@
 
 interface s_neuron_actFunc{
-  public double value(double x) ;
+  public double value(s_neuron node,double x) ;
   
-  public double derivativeOnOutput(double func_var);
+  public double derivativeOnOutput(s_neuron node,double func_var);
 }
 
 class s_neuron_actFunc_tanh implements s_neuron_actFunc{
-  public double value(double x) {
+  public double value(s_neuron node,double x) {
     return (1/( 1 + Math.pow(Math.E,(-1*x))))*2-1;
   }
   
-  public double derivativeOnOutput(double func_var) {
+  public double derivativeOnOutput(s_neuron node,double func_var) {
     func_var=(func_var+1)/2;
     double slop=2*func_var*(1-(func_var));
     return (slop+0.0002)/1.0001;
   }
 }
 class s_neuron_actFunc_sigmoid implements s_neuron_actFunc{
-  public double value(double x) {
+  public double value(s_neuron node,double x) {
     return (1/( 1 + Math.pow(Math.E,(-1*x))));
   }
   
-  public double derivativeOnOutput(double func_var) {
+  public double derivativeOnOutput(s_neuron node,double func_var) {
     double slop=func_var*(1-(func_var));
     return slop;
   }
 }
 class s_neuron_actFunc_ReLU implements s_neuron_actFunc{
-  public double value(double x) {
+  public double value(s_neuron node,double x) {
     return (x>0)?x:0.01*x;
   }
   
-  public double derivativeOnOutput(double func_var) {
+  public double derivativeOnOutput(s_neuron node,double func_var) {
     return func_var>0? 1:0.001;
   }
 }
+
+class s_neuron_actFunc_Softmax implements s_neuron_actFunc{
+  public double value(s_neuron node,double x) {
+    return (x>0)?x:0.01*x;
+  }
+  
+  public double derivativeOnOutput(s_neuron node,double func_var) {
+    return func_var>0? 1:0.001;
+  }
+}
+
+
+
+
 
 
 class s_neuron{
@@ -95,42 +109,40 @@ class s_neuron{
     return pre_neuron_L_BK;
   }
   float t=1;
-  void Update_dW(float learningRate)
+ /* void Update_dW(float learningRate)//ADAM
   {
-    float beta1=0.9;
-    float beta2=0.98;
+    float beta1=0.8;
+    float beta2=0.8;
     
     t+=0.01;
     
-    float emph=(1-0.9/t);
-    //beta1Pt*=beta1;
-    //beta2Pt*=beta2;
+    float emph=0.01;
     for(int i=0;i<GetActual_pre_neuron_L();i++)
     {
-      
-      /*if(ADss[i]>10)
-      {
-        ADss[i]=10;
-        
-        dW[i]=0;
-        continue;
-      }*/
-      //if(node.LPW[j]*dX<0)node.LPW[j]=0;
-      
-      
-      
       LPW[i]=LPW[i]*beta1+dW[i]*(1-beta1);
       ADss[i]=ADss[i]*beta2+dW[i]*dW[i]*(1-beta2);
-      
-      //float dm=LPW[i]/(1-beta1Pt);
-      //float dv=ADss[i]/(1-beta2Pt);
       
       W[i]+=LPW[i]*learningRate/(sqrt(ADss[i])+emph);
       
       dW[i]=0;
     }
+  }*/
+  void Update_dW(float learningRate)//ADAGRAD
+  {
+    for(int i=0;i<GetActual_pre_neuron_L();i++)
+    {
+      LPW[i]=LPW[i]*0.9+dW[i]*0.1;
+      ADss[i]+=dW[i]*dW[i];
+      float sqrtAdss=sqrt(ADss[i]);
+      W[i]+=LPW[i]*learningRate/(sqrtAdss+0.00001);
+      //print(W[i]+">>>>");
+      float dW2=dW[i]*dW[i];
+      if(dW2>1)dW2=1;
+      dW2=(dW2+0.01)*0.001;
+      ADss[i]*=1-dW2;
+      dW[i]=0;
+    }
   }
-  
   
   void add_pre_neuron(s_neuron pre_neuron,float weight)
   {
@@ -167,7 +179,7 @@ class s_neuron{
     {
       SumVar+=pre_neuron_list[i].latestVar*W[i];
     }
-    latestVar=(float)actFun.value(SumVar);
+    latestVar=(float)actFun.value(this,SumVar);
   }
   
   
@@ -598,13 +610,13 @@ class s_neuron_net{
    // lRate=limit;//*(random(0.5, 1.1));//(float)Math.log(limit*dropO+1);
     
     
-    float dZdY = crossEn?1:(float)node.actFun.derivativeOnOutput(node.latestVar);
+    float dZdY = crossEn?1:(float)node.actFun.derivativeOnOutput(node,node.latestVar);
     float dPdY = dPdZ*dZdY;
     for (int j=0;j<node.pre_neuron_L;j++)
     {
       float dYdW = node.pre_neuron_list[j].latestVar;
       float dX=dPdY*dYdW;
-      node.pre_neuron_list[j].trainError+=dPdY*(node.W[j]);
+      node.pre_neuron_list[j].trainError+=dPdY*(node.W[j])/node.pre_neuron_list[j].post_neuron_L;
       node.dW[j]+=dX;
     }
   }
@@ -656,9 +668,9 @@ class s_neuron_net{
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       Train_Layer(this.ns.get(i),crossEn&&(i==this.ns.size()-1));
-      if(update_dW)
-        Update_dW(lRate);
     }
+    if(update_dW)
+      Update_dW(lRate);
   }
   
   
@@ -721,19 +733,18 @@ class s_neuron_net{
   {
     float aveErr=0;
     float aveErrC=0;
-    
     //lRate*=50;
     //lRate/=1.2;
     for(int i=0;i<iter;i++)
     {
-      PreTrainProcess(lRate);
+      PreTrainProcess(lRate/5);
       for(int j=0;j<InXSet.length;j++)
       {
         aveErr+=TestTrain( InXSet[j], OuYSet[j], lRate, crossEn,update_dW);
         aveErrC++;
+        
       }
     }
-    
     return aveErr/aveErrC;
   }
   float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn,boolean update_dW)
@@ -801,6 +812,7 @@ class s_neuron_net{
       
       seqL--;
       int curIdx=endIdx;
+      float discountF=1;
       for(int j=0;j<seqL;j++)
       {
         
@@ -814,16 +826,26 @@ class s_neuron_net{
         this.calc();
         
         
-        
         float ixx=0;
+        
+        
+        for (int k=this.ns.size()-2;k>0;k--)//last layer will be set later
+        {
+          s_neuron layer[]=this.ns.get(k);
+          for (int m=0;m<layer.length;m++)
+          {
+            layer[m].trainError = 0;
+          }
+        }
+        
+        
+        discountF*=2;
         for(int k=0;k<output.length-memNum;k++)
         {
-          output[k].trainError=OuY[curIdx][k]-output[k].latestVar;
+          output[k].trainError=(OuY[curIdx][k]-output[k].latestVar)/discountF;
           
-          ixx+=output[k].trainError*output[k].trainError;
         }
-        ixx=sqrt(ixx);
-        //print(ixx+">");
+        
         ixx=0;
         for(int k=0;k<memNum;k++)
         {

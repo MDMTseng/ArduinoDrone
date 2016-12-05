@@ -1,11 +1,11 @@
  class reC
   {
     float in_X;
-    float inout_mem[]=new float[3];
+    float inout_mem[]=new float[7];
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -93,11 +93,14 @@
     {
       float memLoopTrain=1;
       
-      for(int i=0;i<memLoopTrain;i++)
+      for(int i=0;i<timeback;i++)
       {
+        int Idx=InoutIdx-i;
+        if(Idx<0)Idx+=InX.length;
+        int timebackX=timeback-i;
         
-        //nn.PreTrainProcess(lRate);
-        nn.TestTrainRecNNx(InX,OuY,InoutIdx,timeback,lRate,false,inout_mem.length);
+        nn.PreTrainProcess(lRate/5);
+        nn.TestTrainRecNNx(InX,OuY,Idx,timebackX,lRate,false,inout_mem.length);
       }
       
       return  0;
@@ -150,21 +153,21 @@
     
     int SKIPC=0;
     float lRate=0.01;
-    int spikePos=10;
+    int spikePos=5;
     void update()
     {
       //if(SKIPC++%2!=0)return;
       strokeWeight(3);
       background(0);
       //if(!trainStop)
-      int seqL=20;
+      int seqL=60;
       
-     /* if(SKIPC++%12==0)
+      if(SKIPC++%12==0)
       {
         spikePos+=1;
         spikePos%=(seqL-5);
         if(spikePos==0)spikePos+=2;
-      }*/
+      }
       rec.init();
       OuY[0]=0;
       //InX[0]=(t%(1))*2-1;
@@ -174,10 +177,14 @@
       {
         
         t+=0.1;
-        rec.in_X=i==(spikePos)?1:-1;
-        if(rec.in_X==1)outX=1;
-        else outX/=1.5;
-        OuY[0]=outX>0.0001?1:-1;
+        rec.in_X=i==(spikePos)||i==(spikePos+25)?1:0;
+        if(rec.in_X==1)
+        {
+          outX=1;
+          t=0;
+        }
+        else outX/=1.1;
+        OuY[0]=outX>0.3?1:0;//cos(10*t)*outX;
         //OuY[0]=i>=(spikePos)&&i<=(spikePos+4)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);
