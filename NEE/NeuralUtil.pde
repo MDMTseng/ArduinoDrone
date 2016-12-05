@@ -819,30 +819,22 @@ class s_neuron_net{
         curIdx-=1;
         if(curIdx<0)curIdx+=InX.length;
         
-        for(int k=0;k<output.length;k++)
+        /*for(int k=0;k<output.length;k++)
         {
           input[k].latestVar=InX[curIdx][k];
         }
-        this.calc();
+        this.calc();*/
         
         
         float ixx=0;
         
         
-        for (int k=this.ns.size()-2;k>0;k--)//last layer will be set later
-        {
-          s_neuron layer[]=this.ns.get(k);
-          for (int m=0;m<layer.length;m++)
-          {
-            layer[m].trainError = 0;
-          }
-        }
         
         
-        discountF*=2;
+        discountF*=1.8;
         for(int k=0;k<output.length-memNum;k++)
         {
-          output[k].trainError=(OuY[curIdx][k]-output[k].latestVar)/discountF;
+          output[k].trainError=0;//(OuY[curIdx][k]-output[k].latestVar)/discountF;
           
         }
         
@@ -871,11 +863,19 @@ class s_neuron_net{
 
         //softMax();
         
+        for (int k=this.ns.size()-2;k>=0;k--)//last layer will be set later
+        {
+          s_neuron layer[]=this.ns.get(k);
+          for (int m=0;m<layer.length;m++)
+          {
+            layer[m].trainError = 0;
+          }
+        }
         Train_S(lRate,crossEn,false);
       
         
       }
-      Update_dW(lRate);
+        Update_dW(lRate);
       //println();
     }
   

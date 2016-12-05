@@ -1,11 +1,11 @@
  class reC
   {
     float in_X;
-    float inout_mem[]=new float[7];
+    float inout_mem[]=new float[3];
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -152,7 +152,7 @@
     float t=1;
     
     int SKIPC=0;
-    float lRate=0.01;
+    float lRate=0.1;
     int spikePos=5;
     void update()
     {
@@ -183,8 +183,8 @@
           outX=1;
           t=0;
         }
-        else outX/=1.1;
-        OuY[0]=outX>0.3?1:0;//cos(10*t)*outX;
+        else outX/=-1.1;
+        OuY[0]=outX<0.9&&outX>0.5?1:-1;//cos(10*t)*outX;
         //OuY[0]=i>=(spikePos)&&i<=(spikePos+4)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);
