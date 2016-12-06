@@ -1,11 +1,11 @@
  class reC
   {
     float in_X;
-    float inout_mem[]=new float[3];
+    float inout_mem[]=new float[4];
     
     float ou_Y;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,1+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{1+inout_mem.length,15,15,1+inout_mem.length});
     float InX[][]=new float[50][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
@@ -88,11 +88,11 @@
       i+=inout_mem.length;
     }
    
-
+    int CCCX=0;
     float training(float InX[][],float OuY[][],int timeback,float lRate)
     {
       float memLoopTrain=1;
-      
+      CCCX++;
       for(int i=0;i<timeback;i++)
       {
         int Idx=InoutIdx-i;
@@ -101,6 +101,7 @@
         
         nn.PreTrainProcess(lRate/5);
         nn.TestTrainRecNNx(InX,OuY,Idx,timebackX,lRate,false,inout_mem.length);
+        nn.Update_dW(lRate);
       }
       
       return  0;
@@ -160,14 +161,14 @@
       strokeWeight(3);
       background(0);
       //if(!trainStop)
-      int seqL=60;
+      int seqL=40;
       
-      if(SKIPC++%12==0)
+      /*if(SKIPC++%120==0)
       {
         spikePos+=1;
         spikePos%=(seqL-5);
         if(spikePos==0)spikePos+=2;
-      }
+      }*/
       rec.init();
       OuY[0]=0;
       //InX[0]=(t%(1))*2-1;
@@ -177,14 +178,27 @@
       {
         
         t+=0.1;
-        rec.in_X=i==(spikePos)||i==(spikePos+25)?1:0;
-        if(rec.in_X==1)
+        if(i==spikePos)
         {
-          outX=1;
+          rec.in_X=1;
+        }
+        else if(i==spikePos+25)
+        {
+          rec.in_X=0.0;
+        }
+        else
+        {
+          rec.in_X=0;
+        }
+        
+        
+        if(rec.in_X>0)
+        {
+          outX=rec.in_X;
           t=0;
         }
-        else outX/=-1.1;
-        OuY[0]=outX<0.9&&outX>0.5?1:-1;//cos(10*t)*outX;
+        else outX/=1.1;
+        OuY[0]=outX<0.9&&outX>0.5?1:0;//cos(10*t)*outX;
         //OuY[0]=i>=(spikePos)&&i<=(spikePos+4)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);

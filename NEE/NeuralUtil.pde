@@ -138,7 +138,7 @@ class s_neuron{
       //print(W[i]+">>>>");
       float dW2=dW[i]*dW[i];
       if(dW2>1)dW2=1;
-      dW2=(dW2+0.01)*0.001;
+      dW2=(dW2+0.001)*0.001;
       ADss[i]*=1-dW2;
       dW[i]=0;
     }
@@ -339,14 +339,14 @@ class s_neuron_net{
         
         layer[i].W[j]+=random(-1,1)*0.00001;
         layer[i].W[j]*=growthSpeed;
-        /*d=d*d;
+        d=d*d;
         if(maxWIdx<d)
         {
           maxW=d;
           maxWIdx=j;
-        }*/
+        }
       }
-      //layer[i].W[maxWIdx]/=1.02;
+      //layer[i].W[maxWIdx]*=growthSpeed;
     }
     
   }
@@ -584,7 +584,7 @@ class s_neuron_net{
       AttractSimNode2(layer,0.80,0.002*rate);
       TrimSimNode(layer,0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
-      NeuronNodeRevive(layer,0.8,1+rate/100);
+      NeuronNodeRevive(layer,0.8,1+rate/50);
     }
   }
   void Train_Node(s_neuron node,boolean crossEn)
@@ -819,11 +819,11 @@ class s_neuron_net{
         curIdx-=1;
         if(curIdx<0)curIdx+=InX.length;
         
-        /*for(int k=0;k<output.length;k++)
+        for(int k=0;k<output.length;k++)
         {
           input[k].latestVar=InX[curIdx][k];
         }
-        this.calc();*/
+        this.calc();
         
         
         float ixx=0;
@@ -834,7 +834,7 @@ class s_neuron_net{
         discountF*=1.8;
         for(int k=0;k<output.length-memNum;k++)
         {
-          output[k].trainError=0;//(OuY[curIdx][k]-output[k].latestVar)/discountF;
+          output[k].trainError=(OuY[curIdx][k]-output[k].latestVar)/discountF;
           
         }
         
@@ -848,7 +848,7 @@ class s_neuron_net{
           ixx+=err*err;
         }
         ixx=sqrt(ixx)/memNum;
-        /*ixx/=3;
+        ixx/=3;
         if(ixx>1)
         {
           for(int k=0;k<memNum;k++)
@@ -856,7 +856,7 @@ class s_neuron_net{
             output[output.length-1-k].trainError/=ixx;
           }
         }
-        println(ixx+",");*/
+        println(ixx+",");
         /*ixx=sqrt(ixx);
         */
         //println();
@@ -875,7 +875,7 @@ class s_neuron_net{
       
         
       }
-        Update_dW(lRate);
+      //  Update_dW(lRate);
       //println();
     }
   
