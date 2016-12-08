@@ -10,7 +10,7 @@ from keras.layers import Dense, LSTM, GRU,SimpleRNN
 
 # since we are using stateful rnn tsteps can be set to 1
 tsteps = 1
-batch_size = 1
+batch_size = 10
 epochs = 5
 # number of elements ahead that are used to make the prediction
 lahead = 1
