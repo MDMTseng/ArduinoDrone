@@ -6,21 +6,22 @@ void setup() {
 }
 NeuralTest nt = new NeuralTest();
 NeuralEv nv=new NeuralEv();
+NeuralC nvc=new NeuralC();
 reCTest reC=new reCTest();
 void draw()
 {
    
   //nt.X2();
-  //nv.draw();
-  reC.update();
-  reC.update();
+  nvc.draw();
+  //reC.update();
 }
 
 float scrollingSpeed=0.000;
 
 
 void keyPressed() {
-  nv.keyPressed();
-  nt.keyPressed();
-  reC.keyPressed();
+  //nv.keyPressed();
+  nvc.keyPressed();
+  //nt.keyPressed();
+  //reC.keyPressed();
 }

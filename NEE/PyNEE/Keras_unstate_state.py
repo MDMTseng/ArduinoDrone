@@ -1,8 +1,6 @@
 
 import numpy as np
 
-from sklearn.preprocessing import MinMaxScaler
-
 import matplotlib.pyplot as plt
 
 
@@ -29,7 +27,7 @@ for i in range(100):
     x=1 if i==50 else 0
     X_t.append([x])
     t = 0 if(x==1) else (t+1)
-    y = 1 if(t>5 and t<10) else 0
+    y = 1 if(t>10 and t<20) else 0
     Y_t.append([y])
 
 
@@ -59,7 +57,9 @@ theano.config.compute_test_value = "ignore"
 # create and fit the LSTM network
 batch_size = 100
 model = Sequential()
-model.add(GRU(128,input_dim=1))
+model.add(GRU(50,
+return_sequences=True,input_dim=1))
+model.add(GRU(50))
 #model.add(Dropout(0.3))
 model.add(Dense(1,activation='tanh'))
 model.compile(loss='mean_squared_error', optimizer='adam')
@@ -83,7 +83,9 @@ for epoch in range(2):
 
 w = model.get_weights()
 model = Sequential()
-model.add(GRU(128,input_dim=1,stateful=True,batch_input_shape=(1, 1, 1)))
+model.add(GRU(50,input_dim=1,stateful=True,
+return_sequences=True,batch_input_shape=(1, 1, 1)))
+model.add(GRU(50,stateful=True))
 #model.add(Dropout(0.3))
 model.add(Dense(1,activation='tanh'))
 model.compile(loss='mean_squared_error', optimizer='adam')
@@ -95,8 +97,10 @@ trainPredictXs = trainPredictX
 for i in range(look_ahead):
     prediction = model.predict(trainPredictX, batch_size=1)
     predictions[i] = prediction
-    trainPredictX=np.array([[[i==25 or i==42]]])
-    trainPredictXs=np.append(trainPredictXs,trainPredictX);
+    trainPredictX=np.array([[[i==15 or i==52]]])
+    trainPredictXs=np.append(trainPredictXs,trainPredictX)
+    
+model.reset_states()
 plt.plot(predictions,label='Line'+str(epoch))
 plt.plot(trainPredictXs)
 # plt.plot(np.arange(len(trainX)),np.squeeze(trainX))

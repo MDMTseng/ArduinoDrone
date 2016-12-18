@@ -153,7 +153,7 @@
     float t=1;
     
     int SKIPC=0;
-    float lRate=0.1;
+    float lRate=0.3;
     int spikePos=5;
     void update()
     {
@@ -198,7 +198,7 @@
           t=0;
         }
         else outX/=1.1;
-        OuY[0]=outX<0.9&&outX>0.5?1:0;//cos(10*t)*outX;
+        OuY[0]=outX<10.9&&outX>0.5?1:0;//cos(10*t)*outX;
         //OuY[0]=i>=(spikePos)&&i<=(spikePos+4)?1:-1;
         rec.UpdateNeuronInput();
         rec.SetOuY(OuY);

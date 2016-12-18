@@ -303,6 +303,10 @@ class mFixtureEnv{
       {
         simulateCollide(cre,ret_normalExcced);
         cre.handleCollideExceedNormal(ret_normalExcced,collideObj);
+        
+        //ret_normalExcced.mult(-1);
+        //simulateCollide(collideObj,ret_normalExcced);
+        //collideObj.handleCollideExceedNormal(ret_normalExcced,cre);
       }
     }
   }

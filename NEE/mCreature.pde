@@ -36,16 +36,18 @@ class mFixture{
     float in_exhustedLevel;
     float in_currentSpeed;
     float in_peerInfo;
-    float in_eyesBeam[]=new float[10];
+    float in_eyesBeam[]=new float[15];
     
-    float inout_mem[]=new float[3];
+    float inout_mem[]=new float[0];
     
-    float ou_turnSpeed;
-    float ou_speedAdj;
+    float ou_turnLeft;
+    float ou_turnRight;
+    float ou_speedUp;
+    float ou_speedDown;
     float ou_sendInfo;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,5,5,5,3+inout_mem.length});
-    float InX[][]=new float[20][nn.input.length];
+    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,15,15,15,5+inout_mem.length});
+    float InX[][]=new float[5][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
     float energy;
@@ -83,7 +85,7 @@ class mFixture{
     int InoutIdx=0;
     void UpdateNeuronInput()
     {
-      skipIdx=(skipIdx+1)%3;
+      skipIdx=(skipIdx+1)%1;
       if(skipIdx==0)
       {
         InoutIdx++;
@@ -119,11 +121,11 @@ class mFixture{
         OuY[InoutIdx][j]=nn.output[j].latestVar;
       }
       i=0;
-      ou_turnSpeed=OuY[InoutIdx][i++];
+      ou_turnLeft=OuY[InoutIdx][i++];
+      ou_turnRight=OuY[InoutIdx][i++];
+      ou_speedUp=OuY[InoutIdx][i++];
+      ou_speedDown=OuY[InoutIdx][i++];
       
-      //rotation_speed(ou_turnSpeed*3.1/180);
-      ou_speedAdj=OuY[InoutIdx][i++];
-      ou_sendInfo=OuY[InoutIdx][i++];
       
       for(int j=0;j<inout_mem.length;j++)
       {
@@ -133,56 +135,61 @@ class mFixture{
     
     void StimulationTraining(float stimulationLevel,int iter)//+ for reward
     {
-      if(stimulationLevel>10)stimulationLevel=10;
-      if(stimulationLevel<-10)stimulationLevel=-10;
-      stimulationLevel/=10;
-      //stimulationLevel=stimulationLevel*stimulationLevel*stimulationLevel;
+      if(stimulationLevel>1)stimulationLevel=1;
+      if(stimulationLevel<-1)stimulationLevel=-1;
       
       float greX=0;
       float memAdj=0;
-      if(stimulationLevel>0)
-      {
-        in_exhustedLevel*=0.5;
-        //greX=-2*OuY[0][InoutIdx];
-        greX=(in_eyesBeam[in_eyesBeam.length-2]+in_eyesBeam[in_eyesBeam.length-1])-(in_eyesBeam[0]+in_eyesBeam[1]);
-        memAdj=1;
-      }
-      else
-      {
-        in_exhustedLevel+=.1;
-        greX=((in_eyesBeam[in_eyesBeam.length-2]+in_eyesBeam[in_eyesBeam.length-1])>(in_eyesBeam[0]+in_eyesBeam[1])?-0.8:0.8);
-        memAdj=-0.5;
-      }
-      
       
       float alpha=1;
       int rIdx=InoutIdx;
+      float midOffset=0;
       for(int i=0;i<InX[0].length;i++)
       {
-          OuY[rIdx][0]=OuY[rIdx][0]*(1-alpha)+(alpha)*(greX);
-
-          OuY[rIdx][1]=OuY[rIdx][1]*(1-alpha)+(alpha)*stimulationLevel;
-          
-          OuY[rIdx][2]=stimulationLevel>0?1:-1;
-          memAdj=1*(1-alpha)+(alpha)*memAdj;
-          for(int j=0;j<inout_mem.length;j++)
+        midOffset=-(OuY[rIdx][0]+OuY[rIdx][1])/10;
+          if(OuY[rIdx][0]>OuY[rIdx][1])
           {
-            OuY[rIdx][j+3]*=memAdj;
+            OuY[rIdx][0]+=stimulationLevel;
+            OuY[rIdx][1]-=stimulationLevel;
           }
-
-
+          else
+          {
+            OuY[rIdx][1]+=stimulationLevel;
+            OuY[rIdx][0]-=stimulationLevel;
+          }
+          OuY[rIdx][0]+=midOffset;
+          OuY[rIdx][1]+=midOffset;
+          
+          
+        midOffset=-(OuY[rIdx][2]+OuY[rIdx][3])/10;
+          if(OuY[rIdx][2]>OuY[rIdx][3])
+          {
+            OuY[rIdx][2]+=stimulationLevel;
+            
+            OuY[rIdx][3]-=stimulationLevel;
+          }
+          else
+          {
+            OuY[rIdx][3]+=stimulationLevel;
+            
+            OuY[rIdx][2]-=stimulationLevel;
+          }
+          
+          OuY[rIdx][3]+=midOffset;
+          OuY[rIdx][2]+=midOffset;
           alpha/=1.1;
+          stimulationLevel*=alpha;
           rIdx--;
           if(rIdx<0)rIdx+=InX.length;
       }
       
-      float lRate =(stimulationLevel)>0? 0.5:1;
+      float lRate =0.1;
       training(InX,OuY,iter,lRate);
       if(expShareList!=null)
       for(int i=0;i<expShareList.length;i++)
       {
         if(expShareList[i]==this)continue;
-        expShareList[i].training(InX,OuY,iter/3+1,lRate*0.8);
+        //expShareList[i].training(InX,OuY,iter/3+1,lRate*0.8);
         
       }
       
@@ -211,7 +218,7 @@ class mFixture{
       for(int i=0;i<memLoopTrain;i++)
       {
         
-        nn.PreTrainProcess(0.01);
+        nn.PreTrainProcess(lRate);
         /*for(int j=0;j<iter;j++)
         {
           for(int k=0;k<InX.length;k++)
@@ -275,20 +282,16 @@ class mCreature extends mFixture{
 
   ConsciousCenter CC=new ConsciousCenter();
   
-  void handleCollideExceedNormal(PVector normalExcced)
+  void handleCollideExceedNormal(PVector normalExcced,mFixture collideObj)
   {
-   // println("Hit");
-    if(guideGate)return;
+    float crashLevel=normalExcced.mag();
     
-    float crashLevel=normalExcced.mag()+2;
-    for(int i=0;i<CC.in_eyesBeam.length;i++)
-    {
-      
-      //println("CC.in_eyesBeam["+i+"]="+CC.in_eyesBeam[i]);
-
-    }
-    CC.StimulationTraining(-crashLevel*5,1);
+    CC.StimulationTraining(-crashLevel/5,1);
     
+    pos.x=random(-300,300);
+    pos.y=random(-300,300);
+    speed.x=random(-2,2);
+    speed.y=random(-2,2);
   }
   
   
@@ -311,21 +314,12 @@ class mCreature extends mFixture{
   
   float turnAcc = 0;
   float speedAbs;
+  float turnAmount=0;
+  int rewardC=0;
   
   boolean isfellBad=false;
   void update(mFixtureEnv env)
   {
-    
-    if(!isfellBad&&CC.ou_sendInfo<-0.5)
-    {
-      isfellBad=true;
-        println("FeelBad....");
-    }
-    else if(isfellBad&&CC.ou_sendInfo>0.5)
-    {
-      isfellBad=false;
-        println("It's good Now....");
-    }
     
     CC.in_peerInfo*=0.6;
     float velocity=prePos.dist(pos);
@@ -367,7 +361,7 @@ class mCreature extends mFixture{
       float distret=env.testBeamCollide(pos,speedAngle+spreadAngle*PI/180*i,ret_intersect, retCollide);
       if(minDist>distret)minDist=distret;
       if(maxDist<distret)maxDist=distret;
-      CC.in_eyesBeam[i]=100/distret;
+      CC.in_eyesBeam[i]=10/distret;
       if(retCollide[0] instanceof mCreature)
       {
         mCreature collideCre = (mCreature)retCollide[0];
@@ -379,8 +373,9 @@ class mCreature extends mFixture{
 
     }
    // minDist=(minDist+maxDist)/2;
-    if(!guideGate&&minDist>200)
+    if(!guideGate&&rewardC++>100&&minDist>200)
     {
+      rewardC=0;
       float d=((minDist)-200)/200;
       if(d>1)d=1;
       CC.StimulationTraining(d/5,1);
@@ -396,13 +391,30 @@ class mCreature extends mFixture{
     
     //stroke(0,255,0,100);
     //turnHist.Draw(CC.ou_turnSpeed*10,0,300,width,500);
+    if(CC.ou_speedUp>CC.ou_speedDown)
+    {
+      speed.mult(1.01);
+    }
+    else
+    {
+      speed.mult(1/1.01);
+    }
     
-    speed.mult(map(CC.ou_speedAdj,1,-1,1.1,1/1.1));
     //speed.mult(CC.ou_speedAdj);
     speedAbs=speed.mag();
     CC.in_currentSpeed=speedAbs/2;
-    rotation_speed((0.5+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
     
+    float turn=CC.ou_turnLeft>CC.ou_turnRight?1:-1;
+    
+    rotation_speed(turn*PI/180);
+    turnAmount+=turn;
+    
+    if(turnAmount>1000||turnAmount<-1000)
+    {
+      turnAmount=0;
+      
+      CC.StimulationTraining(-0.2,1);
+    }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
     
@@ -572,15 +584,33 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     CC.UpdateNeuronInput();
     
     
- 
-    speed.mult(map(CC.ou_speedAdj,1,-1,1.1,1/1.1));
-    speeUpC+=CC.ou_speedAdj;
+    
+     
+    //stroke(0,255,0,100);
+    //turnHist.Draw(CC.ou_turnSpeed*10,0,300,width,500);
+    if(CC.ou_speedUp>CC.ou_speedDown)
+    {
+      speed.mult(1.01);
+    }
+    else
+    {
+      speed.mult(1/1.01);
+    }
+    
+    //speed.mult(CC.ou_speedAdj);
+    speedAbs=speed.mag();
+    CC.in_currentSpeed=speedAbs/2;
+    
+    float turn=CC.ou_turnLeft>CC.ou_turnRight?1:-1;
+    
+    
+    
     //speed.mult(CC.ou_speedAdj);
     speedAbs=speed.mag();
     //CC.in_energy-=0.001/speedAbs;
     CC.in_currentSpeed=speedAbs/2;
-    rotation_speed((0.3+CC.in_currentSpeed)*CC.ou_turnSpeed*PI/180);
-    turnX+=CC.ou_turnSpeed;
+    rotation_speed(turn*PI/180);
+    turnX+=turn;
     
     {
       float absTurnX=(turnX>0)?turnX:-turnX;

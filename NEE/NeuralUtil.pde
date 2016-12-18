@@ -616,7 +616,7 @@ class s_neuron_net{
     {
       float dYdW = node.pre_neuron_list[j].latestVar;
       float dX=dPdY*dYdW;
-      node.pre_neuron_list[j].trainError+=dPdY*(node.W[j])/node.pre_neuron_list[j].post_neuron_L;
+      node.pre_neuron_list[j].trainError+=dPdY*(node.W[j]);
       node.dW[j]+=dX;
     }
   }
@@ -831,7 +831,7 @@ class s_neuron_net{
         
         
         
-        discountF*=1.8;
+        discountF*=991.8;
         for(int k=0;k<output.length-memNum;k++)
         {
           output[k].trainError=(OuY[curIdx][k]-output[k].latestVar)/discountF;
