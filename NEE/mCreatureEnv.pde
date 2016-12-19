@@ -94,10 +94,6 @@ class mFixtureEnv{
       collideAmount++;
       ret_normalExcced.add(collideVec);
       
-    }
-    
-    if(collideAmount!=0)
-    {
       collideObj=mf;
     }
     
@@ -282,8 +278,8 @@ class mFixtureEnv{
    // if(ret_normalExcced.x>0)
     
     cre.pos.sub(ret_normalExcced);
-    //if(ret_normalExcced.x!=0)cre.speed.x+=-0.5*ret_normalExcced.x;
-    //if(ret_normalExcced.y!=0)cre.speed.y+=-0.5*ret_normalExcced.y;
+    if(ret_normalExcced.x!=0)cre.speed.x+=-0.2*ret_normalExcced.x;
+    if(ret_normalExcced.y!=0)cre.speed.y+=-0.2*ret_normalExcced.y;
   }
   
   
@@ -304,9 +300,9 @@ class mFixtureEnv{
         simulateCollide(cre,ret_normalExcced);
         cre.handleCollideExceedNormal(ret_normalExcced,collideObj);
         
-        //ret_normalExcced.mult(-1);
-        //simulateCollide(collideObj,ret_normalExcced);
-        //collideObj.handleCollideExceedNormal(ret_normalExcced,cre);
+        ret_normalExcced.mult(-1);
+        simulateCollide(collideObj,ret_normalExcced);
+        collideObj.handleCollideExceedNormal(ret_normalExcced,cre);
       }
     }
   }

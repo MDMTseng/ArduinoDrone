@@ -10,24 +10,13 @@ from keras.layers import Dense, LSTM, GRU,SimpleRNN
 
 # since we are using stateful rnn tsteps can be set to 1
 tsteps = 1
-batch_size = 10
+batch_size = 100
 epochs = 5
 # number of elements ahead that are used to make the prediction
 lahead = 1
 
 
 def gen_XY(amp=1, period=10, x0=0, xn=500, step=1, k=0.0000001):
-    """Generates an absolute cosine time series with the amplitude
-    exponentially decreasing
-
-    Arguments:
-        amp: amplitude of the cosine function
-        period: period of the cosine function
-        x0: initial x of the time series
-        xn: final x of the time series
-        step: step of the time series discretization
-        k: exponential rate
-    """
     X = np.zeros(((xn - x0) * step, 1, 1))
     Y = np.zeros(((xn - x0) * step, 1))
 
@@ -62,7 +51,7 @@ for i in range(epochs):
               verbose=1,
               nb_epoch=100,
               shuffle=False)
-    model.reset_states()
+model.reset_states()
 
 print('Predicting')
 print('cos.shape:',X.shape)

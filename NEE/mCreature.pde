@@ -36,7 +36,7 @@ class mFixture{
     float in_exhustedLevel;
     float in_currentSpeed;
     float in_peerInfo;
-    float in_eyesBeam[]=new float[15];
+    float in_eyesBeam[]=new float[5];
     
     float inout_mem[]=new float[0];
     
@@ -44,11 +44,14 @@ class mFixture{
     float ou_turnRight;
     float ou_speedUp;
     float ou_speedDown;
-    float ou_sendInfo;
+    float ou_expectReward;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,15,15,15,5+inout_mem.length});
-    float InX[][]=new float[5][nn.input.length];
+    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,25,20,15,5+inout_mem.length});
+    int histC=0;
+    float InX[][]=new float[30][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
+    
+    
     
     float energy;
   
@@ -78,16 +81,22 @@ class mFixture{
         inout_mem[i]=0;
       }
     }
-    
-    
     int skipIdx=0;
+    
+    void histReset()
+    {
+      skipIdx=0;
+      histC=0;
+    }
         
     int InoutIdx=0;
     void UpdateNeuronInput()
     {
-      skipIdx=(skipIdx+1)%1;
+      skipIdx=(skipIdx+1)%2;
       if(skipIdx==0)
       {
+        histC++;
+        if(histC>InX.length)histC=InX.length;
         InoutIdx++;
         InoutIdx%=InX.length;
       }
@@ -121,6 +130,14 @@ class mFixture{
         OuY[InoutIdx][j]=nn.output[j].latestVar;
       }
       i=0;
+      if(random(0,1)>0.80)
+      {
+        OuY[InoutIdx][0]+=(random(0,1)>0.5)?100:-100;
+      }
+      if(random(0,1)>0.80)
+      {
+        OuY[InoutIdx][2]+=(random(0,1)>0.5)?100:-100;
+      }
       ou_turnLeft=OuY[InoutIdx][i++];
       ou_turnRight=OuY[InoutIdx][i++];
       ou_speedUp=OuY[InoutIdx][i++];
@@ -133,63 +150,113 @@ class mFixture{
       }
     }
     
-    void StimulationTraining(float stimulationLevel,int iter)//+ for reward
+    int expeienceWIdx=0;
+    float eInX[][]=new float[100][nn.input.length];
+    float eOuY[][]=new float[eInX.length][nn.output.length];
+    
+    /*
+    (s(tate),a(ct),r(eward),s'(tate next))
+    
+    
+    
+    
+    */
+    
+    float S_tate[][]=new float[100][nn.input.length];
+    float A_ct[][]=new float[S_tate.length][nn.output.length];
+    float S_tate_next[][]=new float[S_tate.length][nn.input.length];
+    float R_eward[]=new float[S_tate.length];
+    
+    void pushExperienceX(float eInXSample[],float eOuYSample[])
     {
-      if(stimulationLevel>1)stimulationLevel=1;
-      if(stimulationLevel<-1)stimulationLevel=-1;
-      
-      float greX=0;
-      float memAdj=0;
-      
-      float alpha=1;
-      int rIdx=InoutIdx;
-      float midOffset=0;
-      for(int i=0;i<InX[0].length;i++)
+      for(int i=0;i<eInXSample.length;i++)
       {
-        midOffset=-(OuY[rIdx][0]+OuY[rIdx][1])/10;
-          if(OuY[rIdx][0]>OuY[rIdx][1])
-          {
-            OuY[rIdx][0]+=stimulationLevel;
-            OuY[rIdx][1]-=stimulationLevel;
-          }
-          else
-          {
-            OuY[rIdx][1]+=stimulationLevel;
-            OuY[rIdx][0]-=stimulationLevel;
-          }
-          OuY[rIdx][0]+=midOffset;
-          OuY[rIdx][1]+=midOffset;
+        eInX[expeienceWIdx][i]=eInXSample[i];
+      }
+      
+      for(int i=0;i<eOuYSample.length;i++)
+      {
+        eOuY[expeienceWIdx][i]=eOuYSample[i];
+      }
+      
+      expeienceWIdx++;
+      if(expeienceWIdx>=eInX.length)
+      {
+        expeienceWIdx=0;
+      }
+      
+    }
+    
+    void ReinforcementTraining(float rewardLevel,int iter)//+ for reward
+    {
+      if(histC<3)return;
+      if(rewardLevel>1)rewardLevel=1;
+      if(rewardLevel<-1)rewardLevel=-1;
+      
+      float centerX;
+      int rIdx=InoutIdx;
+      
+      float rewardLevel_Rotate=rewardLevel;
+      float rewardFuture_Rotate=0;
+      float rewardLevel_Speed=rewardLevel;
+      float rewardFuture_Speed=0;
+      
+      float alpha=0.9;
+      float garma=0.5;
+      for(int i=0;i<histC;i++)
+      {
+        int selIdx;
+        float tmp;
+        
+        selIdx=(OuY[rIdx][0]>OuY[rIdx][1])?0:1;
+        if(OuY[rIdx][0]>50)OuY[rIdx][0]-=100;
+        if(OuY[rIdx][0]<-50)OuY[rIdx][0]+=100;
+        
+        OuY[rIdx][selIdx]=(alpha)*OuY[rIdx][selIdx]+(1-alpha)*(rewardLevel_Rotate+(garma)*rewardFuture_Rotate);
+        rewardFuture_Rotate=(OuY[rIdx][0]>OuY[rIdx][1])?OuY[rIdx][0]:OuY[rIdx][1];
+        rewardLevel_Rotate=0;
+        OuY[rIdx][1-selIdx]=Float.POSITIVE_INFINITY;  
           
-          
-        midOffset=-(OuY[rIdx][2]+OuY[rIdx][3])/10;
-          if(OuY[rIdx][2]>OuY[rIdx][3])
-          {
-            OuY[rIdx][2]+=stimulationLevel;
-            
-            OuY[rIdx][3]-=stimulationLevel;
-          }
-          else
-          {
-            OuY[rIdx][3]+=stimulationLevel;
-            
-            OuY[rIdx][2]-=stimulationLevel;
-          }
-          
-          OuY[rIdx][3]+=midOffset;
-          OuY[rIdx][2]+=midOffset;
-          alpha/=1.1;
-          stimulationLevel*=alpha;
-          rIdx--;
-          if(rIdx<0)rIdx+=InX.length;
+        
+        selIdx=(OuY[rIdx][2]>OuY[rIdx][3])?2:3;
+        if(OuY[rIdx][2]>50)OuY[rIdx][2]-=100;
+        if(OuY[rIdx][2]<-50)OuY[rIdx][2]+=100;
+        OuY[rIdx][selIdx]=(alpha)*OuY[rIdx][selIdx]+(1-alpha)*(rewardLevel_Speed+(garma)*rewardFuture_Speed);
+        rewardFuture_Speed=(OuY[rIdx][2]>OuY[rIdx][3])?OuY[rIdx][2]:OuY[rIdx][3];
+        rewardLevel_Speed=0;
+        
+        OuY[rIdx][5-selIdx]=Float.POSITIVE_INFINITY;  
+        //if(i<10)println(">>"+i+" i:"+selIdx+">"+OuY[rIdx][2]+"<>"+OuY[rIdx][3]);
+        
+        /*centerX=(OuY[rIdx][0]+OuY[rIdx][1])/100;
+        OuY[rIdx][0]-=centerX;
+        OuY[rIdx][1]-=centerX;
+        
+        centerX=(OuY[rIdx][2]+OuY[rIdx][3])/100;
+        OuY[rIdx][2]-=centerX;
+        OuY[rIdx][3]-=centerX;*/
+        
+        OuY[rIdx][4]=rewardLevel;
+        
+        if((i<15&&(random(0,1)>0.8))||i==0)
+          pushExperienceX(InX[rIdx],OuY[rIdx]);
+        //alpha*=0.5;
+        rIdx--;
+        if(rIdx<0)rIdx+=InX.length;
       }
       
       float lRate =0.1;
-      training(InX,OuY,iter,lRate);
+      nn.TestTrain(InX,OuY,InoutIdx,histC,lRate,false,true);
+      
+      //nn.Update_dW(lRate/histC);
+      nn.TestTrain(eInX,eOuY,eInX.length-1,eInX.length,lRate,false,true);
       if(expShareList!=null)
       for(int i=0;i<expShareList.length;i++)
       {
         if(expShareList[i]==this)continue;
-        //expShareList[i].training(InX,OuY,iter/3+1,lRate*0.8);
+        if(random(0,1)>0.9)
+          expShareList[i].nn.TestTrain(eInX,eOuY,eInX.length-1,eInX.length,lRate,false,true);
+          
         
       }
       
@@ -209,31 +276,9 @@ class mFixture{
       }
       
       
-      training(InX,OuY,1,0.1);
+      //training(InX,OuY,1,0.1);
     }
-    float training(float InX[][],float OuY[][],int iter,float lRate)
-    {
-      float memLoopTrain=1;
-      
-      for(int i=0;i<memLoopTrain;i++)
-      {
-        
-        nn.PreTrainProcess(lRate);
-        /*for(int j=0;j<iter;j++)
-        {
-          for(int k=0;k<InX.length;k++)
-          {
-            nn.TestTrainRecNN(InX[j],OuY[j],lRate,false,5,inout_mem.length);
-          }
-        }*/
-        
-        
-        nn.TestTrain(InX,OuY,iter,lRate);
-      }
-      
-      return  0;
-    }
-    
+
     
   
   }
@@ -285,13 +330,23 @@ class mCreature extends mFixture{
   void handleCollideExceedNormal(PVector normalExcced,mFixture collideObj)
   {
     float crashLevel=normalExcced.mag();
+    if((collideObj instanceof mCreature) )
+    {
+      mCreature cobj=(mCreature)collideObj;
+      if(cobj.lifeTime<5)return;
+    }
+    else
+    {
+    }
     
-    CC.StimulationTraining(-crashLevel/5,1);
+    CC.ReinforcementTraining(-1,1);
+    CC.histReset();
+    lifeTime=0;
+    pos.x=random(-200,200);
+    pos.y=random(-200,200);
+    speed.x=random(-1,1);
+    speed.y=random(-1,1);
     
-    pos.x=random(-300,300);
-    pos.y=random(-300,300);
-    speed.x=random(-2,2);
-    speed.y=random(-2,2);
   }
   
   
@@ -317,69 +372,46 @@ class mCreature extends mFixture{
   float turnAmount=0;
   int rewardC=0;
   
+  float lifeTime=0;
   boolean isfellBad=false;
+  mFixtureEnv env=null;
+  float eye_spreadAngle=15;
+  
+  mFixture retCollide[]=new mFixture[1];
   void update(mFixtureEnv env)
   {
-    
+     this.env=env;
     CC.in_peerInfo*=0.6;
     float velocity=prePos.dist(pos);
     prePos.set(pos);
-    if(velocity<0.001)
-    {  
-      speedLowC++;
-      if(speedLowC>120)
-      {
-        
-        pos.x=random(-100,100);
-        pos.y=random(-100,100);
-            
-        speed.x=random(-10,10);
-        speed.y=random(-10,10);
-        speedLowC=0;
-      }
-    }
-    else
-    {
-      speedLowC=0;
-    }
       
     
-    
-    float spreadAngle=20;
     PVector ret_intersect=new PVector();
-    float speedAngle=atan2(speed.y,speed.x)-spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
+    float speedAngle=atan2(speed.y,speed.x)-eye_spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
     
     float minDist=Float.POSITIVE_INFINITY;
     float maxDist=0;
-    stroke(c,100);
-    fill(c,100);
-    
-    mFixture retCollide[]=new mFixture[1];
     for(int i=0;i<CC.in_eyesBeam.length;i++)
     {
       
-      float distret=env.testBeamCollide(pos,speedAngle+spreadAngle*PI/180*i,ret_intersect, retCollide);
+      float distret=env.testBeamCollide(pos,speedAngle+eye_spreadAngle*PI/180*i,ret_intersect, retCollide);
       if(minDist>distret)minDist=distret;
       if(maxDist<distret)maxDist=distret;
-      CC.in_eyesBeam[i]=10/distret;
+      CC.in_eyesBeam[i]=100/distret;
       if(retCollide[0] instanceof mCreature)
       {
         mCreature collideCre = (mCreature)retCollide[0];
         
-        collideCre.CC.in_peerInfo+=CC.ou_sendInfo;
+        //collideCre.CC.in_peerInfo+=CC.ou_expectReward;
       }
-      //ellipse(ret_intersect.x+env.frameW/2,-ret_intersect.y+env.frameH/2, 15, 15);
-      //line(ret_intersect.x+env.frameW/2,-ret_intersect.y+env.frameH/2,pos.x+env.frameW/2,-pos.y+env.frameH/2);
 
     }
+    //println("minDist="+minDist);
    // minDist=(minDist+maxDist)/2;
-    if(!guideGate&&rewardC++>100&&minDist>200)
+    if(lifeTime>2000&&minDist>100)
     {
-      rewardC=0;
-      float d=((minDist)-200)/200;
-      if(d>1)d=1;
-      CC.StimulationTraining(d/5,1);
-      
+      lifeTime=0;
+      CC.ReinforcementTraining(0.7,1);
     }
       
     CC.UpdateNeuronInput();
@@ -409,11 +441,12 @@ class mCreature extends mFixture{
     rotation_speed(turn*PI/180);
     turnAmount+=turn;
     
-    if(turnAmount>1000||turnAmount<-1000)
+    if(turnAmount>500||turnAmount<-500)
     {
       turnAmount=0;
       
-      CC.StimulationTraining(-0.2,1);
+      lifeTime=0;
+      CC.ReinforcementTraining(-0.8,1);
     }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
@@ -426,10 +459,44 @@ class mCreature extends mFixture{
     else if(speedAbs<0.5)
       speed.mult(random(1.1,1.2));
 
+    lifeTime+=speedAbs/5+0.5;
     
     pos.add(speed);
   }
   
+  void draw(float offsetX,float offsetY)
+  {
+    
+    stroke(c,50);
+    fill(c,50);
+    
+    PVector ret_intersect=new PVector();
+    float speedAngle=atan2(speed.y,speed.x)-eye_spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
+    
+    if(env!=null)
+    for(int i=0;i<CC.in_eyesBeam.length;i++)
+    {
+      
+      env.testBeamCollide(pos,speedAngle+eye_spreadAngle*PI/180*i,ret_intersect, retCollide);
+      ellipse(ret_intersect.x+env.frameW/2,-ret_intersect.y+env.frameH/2, 15, 15);
+      line(ret_intersect.x+env.frameW/2,-ret_intersect.y+env.frameH/2,pos.x+env.frameW/2,-pos.y+env.frameH/2);
+
+    }
+    
+    fill(c);
+    stroke(c);
+    
+    ellipse(pos.x+offsetX,-pos.y+offsetY, size, size);
+    
+    
+    fill(255);
+    stroke(255);
+    line(pos.x+offsetX,-pos.y+offsetY,pos.x+5*speed.x+offsetX,-(pos.y+5*speed.y)+offsetY );
+    
+    noFill();
+    
+    
+  }
   
 }
 
@@ -539,9 +606,6 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
   boolean isfellBad=false;
   void update(mFixtureEnv env)
   {
-    lifeTime++;
-    
-    
     float spreadAngle=100/CC.in_eyesBeam.length;
     PVector ret_intersect=new PVector();
     float speedAngle=atan2(speed.y,speed.x)-spreadAngle*PI/180*(CC.in_eyesBeam.length-1)/2;
@@ -565,7 +629,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       {
         mCreatureEv collideCre = (mCreatureEv)retCollide[0];
         
-        collideCre.CC.in_peerInfo+=CC.ou_sendInfo/distret;
+        collideCre.CC.in_peerInfo+=CC.ou_expectReward/distret;
         
         //collideCre.CC.in_energy+=0.001/distret;
         CC.in_energy+=0.01/distret/CC.in_eyesBeam.length;
@@ -630,9 +694,9 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       speed.mult(0.9);
     }
     else if(speedAbs<0.5)
-      speed.mult(random(1.1,1.2));
+      speed.mult(1.1);
 
-    lifeTime+=speed.mag()/5;
+    lifeTime+=speed.mag()/5+0.5;
     pos.add(speed);
   }
   void draw(float offsetX,float offsetY)

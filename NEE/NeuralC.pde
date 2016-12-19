@@ -1,7 +1,7 @@
 class NeuralC{
 
   mFixtureEnv env=new mFixtureEnv(860,500);
-  mCreature cres[] = new mCreature[12];
+  mCreature cres[] = new mCreature[8];
   ConsciousCenter ccset[] = new ConsciousCenter[cres.length];
   
   
@@ -78,7 +78,7 @@ class NeuralC{
     inHist[0].Draw(cres[0].CC.in_peerInfo*50,width/2,Y,width/2,300);
       Y+=50;
     stroke(255,0,0);
-    inHist[1].Draw(cres[0].CC.ou_sendInfo*50,width/2,Y,width/2,300);
+    inHist[1].Draw(cres[0].CC.ou_expectReward*50,width/2,Y,width/2,300);
     //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
   }
   

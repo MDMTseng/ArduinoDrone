@@ -306,7 +306,7 @@ class s_neuron_net{
         currentlayer[j] = new s_neuron(1,actFun);
         for(int k=0;k<prelayer.length;k++)
         {
-          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
+          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*0.1);
         }
         currentlayer[j].add_pre_neuron(one_offset ,XRand(0,0.5));
       }
@@ -346,7 +346,7 @@ class s_neuron_net{
           maxWIdx=j;
         }
       }
-      //layer[i].W[maxWIdx]*=growthSpeed;
+      layer[i].W[maxWIdx]*=growthSpeed;
     }
     
   }
@@ -573,15 +573,15 @@ class s_neuron_net{
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       s_neuron layer[]=this.ns.get(i);
-      SupressL2(layer,rate*0.01/layer.length);
-      SupressL1X(layer,rate*0.0001/layer.length);
+      SupressL2(layer,rate*0.0001);
+      SupressL1X(layer,rate*0.00001);
     }
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       s_neuron layer[]=this.ns.get(i);
       //AttractSimNode(layer,0.70,0.80);
-      AttractSimNode2(layer,0.80,0.002*rate);
+      AttractSimNode2(layer,0.80,0.001*rate);
       TrimSimNode(layer,0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
       NeuronNodeRevive(layer,0.8,1+rate/50);
@@ -747,6 +747,28 @@ class s_neuron_net{
     }
     return aveErr/aveErrC;
   }
+  
+  
+  
+  float TestTrain(float InXSet[][],float OuYSet[][],int headIdx,int histL,float lRate,boolean crossEn,boolean update_dW)
+  {
+    float aveErr=0;
+    float aveErrC=0;
+    //lRate*=50;
+    //lRate/=1.2;
+    
+    for(int j=0;j<histL;j++)
+    {
+      PreTrainProcess(lRate);
+      aveErr+=TestTrain( InXSet[headIdx], OuYSet[headIdx], lRate, crossEn,update_dW);
+      aveErrC++;
+      
+      headIdx--;
+      if(headIdx<0)headIdx+=InXSet.length;
+      
+    }
+    return aveErr/aveErrC;
+  }
   float TestTrain(float InX[],float OuY[],float lRate,boolean crossEn,boolean update_dW)
   {
     //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
@@ -770,7 +792,8 @@ class s_neuron_net{
     //  print("TT:::\n");
     for(int k=0;k<OuY.length;k++)
     {
-      output[k].trainError=OuY[k]-output[k].latestVar;
+      if(OuY[k]!=Float.POSITIVE_INFINITY)
+        output[k].trainError=OuY[k]-output[k].latestVar;
       
         //print(OuY[k]+"<>"+output[k].latestVar+"   ");
     }
