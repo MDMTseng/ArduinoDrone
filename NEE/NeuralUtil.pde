@@ -306,7 +306,7 @@ class s_neuron_net{
         currentlayer[j] = new s_neuron(1,actFun);
         for(int k=0;k<prelayer.length;k++)
         {
-          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*0.1);
+          currentlayer[j].add_pre_neuron(prelayer[k],XRand(0,0.5)*2);
         }
         currentlayer[j].add_pre_neuron(one_offset ,XRand(0,0.5));
       }
@@ -573,8 +573,8 @@ class s_neuron_net{
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       s_neuron layer[]=this.ns.get(i);
-      SupressL2(layer,rate*0.0001);
-      SupressL1X(layer,rate*0.00001);
+      SupressL2(layer,rate*0.003);
+      SupressL1X(layer,rate*0.0001);
     }
     
     for (int i=this.ns.size()-1;i!=0;i--)
@@ -773,13 +773,29 @@ class s_neuron_net{
   {
     //if(InX[idx]==Float.NEGATIVE_INFINITY)continue;
     
-    for(int k=0;k<InX.length;k++)
+    for(int k=0;k<input.length;k++)
     {
       input[k].latestVar=InX[k];
     }
     this.calc();
     
-    for (int i=this.ns.size()-2;i>=0;i--)//last layer will be set later
+    for(int k=0;k<output.length;k++)
+    {
+          
+      if(Float.isNaN(OuY[k]))
+        output[k].trainError=0;
+      else  
+        output[k].trainError=OuY[k]-output[k].latestVar;
+    }
+    
+    
+    return TrainSetErr(lRate,crossEn,update_dW);
+    
+  }
+  
+  float TrainSetErr(float lRate,boolean crossEn,boolean update_dW)//To use this you need to set trainError at output layer
+  {
+    for (int i=this.ns.size()-2;i>=0;i--)//last layer is set
     {
       s_neuron layer[]=this.ns.get(i);
       for (int j=0;j<layer.length;j++)
@@ -789,22 +805,12 @@ class s_neuron_net{
     }
     one_offset.trainError = 0;
     
-    //  print("TT:::\n");
-    for(int k=0;k<OuY.length;k++)
-    {
-      if(OuY[k]!=Float.POSITIVE_INFINITY)
-        output[k].trainError=OuY[k]-output[k].latestVar;
-      
-        //print(OuY[k]+"<>"+output[k].latestVar+"   ");
-    }
     //print("\n");
     float ErrorPow=-calcError();
     Train_S(lRate,crossEn,update_dW);
     
     return ErrorPow;
   }
-  
- 
   
     void TestTrainRecNNx(float InX[][],float OuY[][],int endIdx,int seqL,float lRate,boolean crossEn,int memNum)
     {

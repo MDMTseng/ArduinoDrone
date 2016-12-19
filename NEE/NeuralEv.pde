@@ -217,7 +217,7 @@ class NeuralEv{
     inHist[0].Draw(cres[0].CC.in_peerInfo*50,width/2,Y,width/2,300);
       Y+=50;
     stroke(255,0,0);
-    inHist[1].Draw(cres[0].CC.ou_expectReward*50,width/2,Y,width/2,300);
+    //inHist[1].Draw(cres[0].CC.ou_expectReward*50,width/2,Y,width/2,300);
     //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
   }
   

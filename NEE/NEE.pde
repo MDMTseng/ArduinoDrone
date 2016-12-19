@@ -22,6 +22,6 @@ float scrollingSpeed=0.000;
 void keyPressed() {
   //nv.keyPressed();
   nvc.keyPressed();
-  //nt.keyPressed();
+  nt.keyPressed();
   //reC.keyPressed();
 }

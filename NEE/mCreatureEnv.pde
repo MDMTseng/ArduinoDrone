@@ -289,6 +289,7 @@ class mFixtureEnv{
     
     for(mFixture cre:mCre)
     {
+      cre.preUpdate(this);
       cre.update(this);
     }
     
@@ -304,6 +305,10 @@ class mFixtureEnv{
         simulateCollide(collideObj,ret_normalExcced);
         collideObj.handleCollideExceedNormal(ret_normalExcced,cre);
       }
+    }
+    for(mFixture cre:mCre)
+    {
+      cre.postUpdate(this);
     }
   }
   

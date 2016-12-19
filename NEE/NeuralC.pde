@@ -65,7 +65,7 @@ class NeuralC{
     cres[0].c=color(180,150,180);
     drawNN.drawNN(cres[0].CC.nn,10,500,550,350);
     
-    int NNN=5;
+    int NNN=4;
     int Y=250;
     for(int i=0;i<NNN;i++)
     {
@@ -78,7 +78,7 @@ class NeuralC{
     inHist[0].Draw(cres[0].CC.in_peerInfo*50,width/2,Y,width/2,300);
       Y+=50;
     stroke(255,0,0);
-    inHist[1].Draw(cres[0].CC.ou_expectReward*50,width/2,Y,width/2,300);
+    //inHist[1].Draw(cres[0].CC.ou_expectReward*50,width/2,Y,width/2,300);
     //if((TrainCount/25)%10==0) nn.RandomDropOut(0.003);
   }
   

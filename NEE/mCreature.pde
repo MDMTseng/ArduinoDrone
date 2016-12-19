@@ -11,7 +11,12 @@ class mFixture{
   void update(mFixtureEnv env)
   {
   }
-    
+  void preUpdate(mFixtureEnv env)
+  {
+  }
+  void postUpdate(mFixtureEnv env)
+  {
+  }
   void handleCollideExceedNormal(PVector normalExcced,mFixture collideObj)
   {
   }
@@ -44,11 +49,10 @@ class mFixture{
     float ou_turnRight;
     float ou_speedUp;
     float ou_speedDown;
-    float ou_expectReward;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,25,20,15,5+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,20,15,4+inout_mem.length});
     int histC=0;
-    float InX[][]=new float[30][nn.input.length];
+    float InX[][]=new float[2][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
     
     
@@ -92,7 +96,7 @@ class mFixture{
     int InoutIdx=0;
     void UpdateNeuronInput()
     {
-      skipIdx=(skipIdx+1)%2;
+      skipIdx=(skipIdx+1)%1;
       if(skipIdx==0)
       {
         histC++;
@@ -150,115 +154,146 @@ class mFixture{
       }
     }
     
-    int expeienceWIdx=0;
-    float eInX[][]=new float[100][nn.input.length];
-    float eOuY[][]=new float[eInX.length][nn.output.length];
-    
-    /*
-    (s(tate),a(ct),r(eward),s'(tate next))
-    
-    
-    
-    
-    */
-    
-    float S_tate[][]=new float[100][nn.input.length];
-    float A_ct[][]=new float[S_tate.length][nn.output.length];
-    float S_tate_next[][]=new float[S_tate.length][nn.input.length];
-    float R_eward[]=new float[S_tate.length];
-    
-    void pushExperienceX(float eInXSample[],float eOuYSample[])
+    class ExpData
     {
-      for(int i=0;i<eInXSample.length;i++)
+      /*
+      (s(tate),a(ct),r(eward),s'(tate next))
+      */
+        
+      float S_tate[];//current input
+      float A_ct[];//output act decision
+      float R_eward;
+      float S_tate_next[];//next input after current act
+      
+      ExpData(int stateDim,int actDim)
       {
-        eInX[expeienceWIdx][i]=eInXSample[i];
+        S_tate=new float[stateDim];
+        S_tate_next=new float[stateDim];
+        A_ct=new float[actDim];
       }
       
-      for(int i=0;i<eOuYSample.length;i++)
+      
+      ExpData(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
       {
-        eOuY[expeienceWIdx][i]=eOuYSample[i];
+        ExpLink(S_tate,A_ct,R_eward,S_tate_next);
       }
       
-      expeienceWIdx++;
-      if(expeienceWIdx>=eInX.length)
+      
+      void ExpAssign(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
       {
-        expeienceWIdx=0;
+        this.R_eward=R_eward;
+        for(int i=0;i<S_tate.length;i++)
+        {
+          this.S_tate[i]=S_tate[i];
+          if(S_tate_next==null)
+           this.S_tate_next[i]=0;
+          else
+           this.S_tate_next[i]=S_tate_next[i];
+        }
+        for(int i=0;i<A_ct.length;i++)
+        {
+          this.A_ct[i]=A_ct[i];
+        }
+      }
+      void ExpLink(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
+      {
+        this.S_tate=S_tate;
+        this.A_ct=A_ct;
+        this.R_eward=R_eward;
+        this.S_tate_next=S_tate_next;
+      }
+    }
+    class QLearningCore
+    {
+      int expWIdx=0;
+      ExpData expReplaySet[];
+      QLearningCore(int size, int stateDim,int actDim)
+      {
+        expReplaySet=new ExpData[size];
+        for(int i=0;i<expReplaySet.length;i++)
+        {
+          expReplaySet[i]=new ExpData(stateDim,actDim);
+        }
+      }
+      
+      void pushExp(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])//for terminal state set S_tate_next to null
+      {
+        expReplaySet[expWIdx].ExpAssign(S_tate,A_ct,R_eward,S_tate_next);
+        if(++expWIdx>=expReplaySet.length)expWIdx=0;
+      }
+      
+      void actExplain(float q_nx[],ExpData ed) throws Exception
+      {
+        throw new Exception("You have to Override actExplain method");
+      }
+      
+      float Q_nx[];
+      void QlearningTrain(s_neuron_net nn,ExpData ed,float lRate)
+      {
+        if(Q_nx==null||Q_nx.length<nn.output.length)Q_nx=new float[nn.output.length];
+        
+        //Q(s,a)=r(s,a)+garmma*max_a'_(Q(s',a'))
+        //Get Q(s',a')=>Q_nx
+        for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate_next[i];
+        nn.calc();
+        for(int i=0;i<nn.output.length;i++)Q_nx[i]=nn.output[i].latestVar;
+        
+        try{
+          actExplain(Q_nx, ed);
+          float Q_x[]=Q_nx;
+          nn.TestTrain(ed.S_tate,Q_x,lRate,false,true);
+        }
+        catch (Exception e) 
+        {
+        }
       }
       
     }
     
-    void ReinforcementTraining(float rewardLevel,int iter)//+ for reward
+    QLearningCore QL=new QLearningCore(100, InX[0].length, OuY[0].length){
+     void actExplain(float q_nx[],ExpData ed)
+      {
+        //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
+        //if(ed.R_eward!=0)print(ed.R_eward);
+        float garmma=0.95;
+        
+        int selIdx=(ed.A_ct[0]>ed.A_ct[1])?0:1;
+        float maxQ_next_act=(q_nx[0]>q_nx[1])?q_nx[0]:q_nx[1];
+        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
+        q_nx[1-selIdx]=Float.NaN;  
+          
+        
+        selIdx=(ed.A_ct[2]>ed.A_ct[3])?2:3;
+        maxQ_next_act=(q_nx[2]>q_nx[3])?q_nx[2]:q_nx[3];
+        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
+        q_nx[5-selIdx]=Float.NaN;  
+        
+        for(int i=4;i<q_nx.length;i++)//other don't care
+          q_nx[i]=Float.NaN;  
+          
+      }
+    };
+    
+    ExpData thisExp=new ExpData(0,0);
+    void ReinforcementTraining(float reward,int iter)//+ for reward
     {
-      if(histC<3)return;
-      if(rewardLevel>1)rewardLevel=1;
-      if(rewardLevel<-1)rewardLevel=-1;
+      int currentIdx=InoutIdx;
+      int prevIdx=currentIdx-1;
+      if(prevIdx<0)prevIdx+=InX.length;
+      float state[]=InX[prevIdx];
+      float act[]=OuY[prevIdx];
+      float nstate[]=InX[currentIdx];
+      thisExp.ExpLink(state,act,reward,nstate);
       
-      float centerX;
-      int rIdx=InoutIdx;
-      
-      float rewardLevel_Rotate=rewardLevel;
-      float rewardFuture_Rotate=0;
-      float rewardLevel_Speed=rewardLevel;
-      float rewardFuture_Speed=0;
-      
-      float alpha=0.9;
-      float garma=0.5;
-      for(int i=0;i<histC;i++)
+      if(reward!=0||random(0,1)>0.8)
       {
-        int selIdx;
-        float tmp;
-        
-        selIdx=(OuY[rIdx][0]>OuY[rIdx][1])?0:1;
-        if(OuY[rIdx][0]>50)OuY[rIdx][0]-=100;
-        if(OuY[rIdx][0]<-50)OuY[rIdx][0]+=100;
-        
-        OuY[rIdx][selIdx]=(alpha)*OuY[rIdx][selIdx]+(1-alpha)*(rewardLevel_Rotate+(garma)*rewardFuture_Rotate);
-        rewardFuture_Rotate=(OuY[rIdx][0]>OuY[rIdx][1])?OuY[rIdx][0]:OuY[rIdx][1];
-        rewardLevel_Rotate=0;
-        OuY[rIdx][1-selIdx]=Float.POSITIVE_INFINITY;  
-          
-        
-        selIdx=(OuY[rIdx][2]>OuY[rIdx][3])?2:3;
-        if(OuY[rIdx][2]>50)OuY[rIdx][2]-=100;
-        if(OuY[rIdx][2]<-50)OuY[rIdx][2]+=100;
-        OuY[rIdx][selIdx]=(alpha)*OuY[rIdx][selIdx]+(1-alpha)*(rewardLevel_Speed+(garma)*rewardFuture_Speed);
-        rewardFuture_Speed=(OuY[rIdx][2]>OuY[rIdx][3])?OuY[rIdx][2]:OuY[rIdx][3];
-        rewardLevel_Speed=0;
-        
-        OuY[rIdx][5-selIdx]=Float.POSITIVE_INFINITY;  
-        //if(i<10)println(">>"+i+" i:"+selIdx+">"+OuY[rIdx][2]+"<>"+OuY[rIdx][3]);
-        
-        /*centerX=(OuY[rIdx][0]+OuY[rIdx][1])/100;
-        OuY[rIdx][0]-=centerX;
-        OuY[rIdx][1]-=centerX;
-        
-        centerX=(OuY[rIdx][2]+OuY[rIdx][3])/100;
-        OuY[rIdx][2]-=centerX;
-        OuY[rIdx][3]-=centerX;*/
-        
-        OuY[rIdx][4]=rewardLevel;
-        
-        if((i<15&&(random(0,1)>0.8))||i==0)
-          pushExperienceX(InX[rIdx],OuY[rIdx]);
-        //alpha*=0.5;
-        rIdx--;
-        if(rIdx<0)rIdx+=InX.length;
+        println(reward);
+        QL.pushExp(state,act,reward,nstate);
       }
+      QL.QlearningTrain(nn,thisExp,0.1);
       
-      float lRate =0.1;
-      nn.TestTrain(InX,OuY,InoutIdx,histC,lRate,false,true);
-      
-      //nn.Update_dW(lRate/histC);
-      nn.TestTrain(eInX,eOuY,eInX.length-1,eInX.length,lRate,false,true);
-      if(expShareList!=null)
-      for(int i=0;i<expShareList.length;i++)
-      {
-        if(expShareList[i]==this)continue;
-        if(random(0,1)>0.9)
-          expShareList[i].nn.TestTrain(eInX,eOuY,eInX.length-1,eInX.length,lRate,false,true);
-          
-        
-      }
+      for(int i=0;i<10;i++)
+        QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.expReplaySet.length)],0.1);
       
     }
     void BoostingTraining(float alpha)//+ for reward
@@ -338,9 +373,7 @@ class mCreature extends mFixture{
     else
     {
     }
-    
-    CC.ReinforcementTraining(-1,1);
-    CC.histReset();
+    Reward=-5;
     lifeTime=0;
     pos.x=random(-200,200);
     pos.y=random(-200,200);
@@ -377,6 +410,7 @@ class mCreature extends mFixture{
   mFixtureEnv env=null;
   float eye_spreadAngle=15;
   
+  float Reward=0;
   mFixture retCollide[]=new mFixture[1];
   void update(mFixtureEnv env)
   {
@@ -408,10 +442,10 @@ class mCreature extends mFixture{
     }
     //println("minDist="+minDist);
    // minDist=(minDist+maxDist)/2;
-    if(lifeTime>2000&&minDist>100)
+    if(lifeTime>500&&minDist>100)
     {
       lifeTime=0;
-      CC.ReinforcementTraining(0.7,1);
+      Reward=0.2;
     }
       
     CC.UpdateNeuronInput();
@@ -446,7 +480,7 @@ class mCreature extends mFixture{
       turnAmount=0;
       
       lifeTime=0;
-      CC.ReinforcementTraining(-0.8,1);
+      Reward=-0.2;
     }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
@@ -464,6 +498,16 @@ class mCreature extends mFixture{
     pos.add(speed);
   }
   
+  void preUpdate(mFixtureEnv env)
+  {
+    Reward=0;
+  }
+  void postUpdate(mFixtureEnv env)
+  {
+    CC.nn.PreTrainProcess(0.01);
+    CC.ReinforcementTraining(Reward,1);
+    Reward=0;
+  }
   void draw(float offsetX,float offsetY)
   {
     
@@ -629,7 +673,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
       {
         mCreatureEv collideCre = (mCreatureEv)retCollide[0];
         
-        collideCre.CC.in_peerInfo+=CC.ou_expectReward/distret;
+        //collideCre.CC.in_peerInfo+=CC.ou_expectReward/distret;
         
         //collideCre.CC.in_energy+=0.001/distret;
         CC.in_energy+=0.01/distret/CC.in_eyesBeam.length;
