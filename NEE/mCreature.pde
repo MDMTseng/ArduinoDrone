@@ -35,6 +35,31 @@ class mFixture{
 }
 
 
+    
+    QLearningCore QL=new QLearningCore(100, 9, 4){
+     void actExplain(float q_nx[],ExpData ed)
+      {
+        //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
+        //if(ed.R_eward!=0)print(ed.R_eward);
+        float garmma=0.98;
+        
+        int selIdx=(ed.A_ct[0]>ed.A_ct[1])?0:1;
+        float maxQ_next_act=(q_nx[0]>q_nx[1])?q_nx[0]:q_nx[1];
+        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
+        q_nx[1-selIdx]=Float.NaN;  
+          
+        
+        selIdx=(ed.A_ct[2]>ed.A_ct[3])?2:3;
+        maxQ_next_act=(q_nx[2]>q_nx[3])?q_nx[2]:q_nx[3];
+        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
+        q_nx[5-selIdx]=Float.NaN;  
+        
+        for(int i=4;i<q_nx.length;i++)//other don't care
+          q_nx[i]=Float.NaN;  
+          
+      }
+    };
+
   class ConsciousCenter
   {
     float in_energy;
@@ -50,7 +75,7 @@ class mFixture{
     float ou_speedUp;
     float ou_speedDown;
     
-    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,20,15,4+inout_mem.length});
+    s_neuron_net nn = new s_neuron_net(new int[]{4+in_eyesBeam.length+inout_mem.length,20,15,10,4+inout_mem.length});
     int histC=0;
     float InX[][]=new float[2][nn.input.length];
     float OuY[][]=new float[InX.length][nn.output.length];
@@ -134,11 +159,11 @@ class mFixture{
         OuY[InoutIdx][j]=nn.output[j].latestVar;
       }
       i=0;
-      if(random(0,1)>0.80)
+      if(random(0,1)>0.90)
       {
         OuY[InoutIdx][0]+=(random(0,1)>0.5)?100:-100;
       }
-      if(random(0,1)>0.80)
+      if(random(0,1)>0.90)
       {
         OuY[InoutIdx][2]+=(random(0,1)>0.5)?100:-100;
       }
@@ -154,125 +179,7 @@ class mFixture{
       }
     }
     
-    class ExpData
-    {
-      /*
-      (s(tate),a(ct),r(eward),s'(tate next))
-      */
-        
-      float S_tate[];//current input
-      float A_ct[];//output act decision
-      float R_eward;
-      float S_tate_next[];//next input after current act
-      
-      ExpData(int stateDim,int actDim)
-      {
-        S_tate=new float[stateDim];
-        S_tate_next=new float[stateDim];
-        A_ct=new float[actDim];
-      }
-      
-      
-      ExpData(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
-      {
-        ExpLink(S_tate,A_ct,R_eward,S_tate_next);
-      }
-      
-      
-      void ExpAssign(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
-      {
-        this.R_eward=R_eward;
-        for(int i=0;i<S_tate.length;i++)
-        {
-          this.S_tate[i]=S_tate[i];
-          if(S_tate_next==null)
-           this.S_tate_next[i]=0;
-          else
-           this.S_tate_next[i]=S_tate_next[i];
-        }
-        for(int i=0;i<A_ct.length;i++)
-        {
-          this.A_ct[i]=A_ct[i];
-        }
-      }
-      void ExpLink(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
-      {
-        this.S_tate=S_tate;
-        this.A_ct=A_ct;
-        this.R_eward=R_eward;
-        this.S_tate_next=S_tate_next;
-      }
-    }
-    class QLearningCore
-    {
-      int expWIdx=0;
-      ExpData expReplaySet[];
-      QLearningCore(int size, int stateDim,int actDim)
-      {
-        expReplaySet=new ExpData[size];
-        for(int i=0;i<expReplaySet.length;i++)
-        {
-          expReplaySet[i]=new ExpData(stateDim,actDim);
-        }
-      }
-      
-      void pushExp(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])//for terminal state set S_tate_next to null
-      {
-        expReplaySet[expWIdx].ExpAssign(S_tate,A_ct,R_eward,S_tate_next);
-        if(++expWIdx>=expReplaySet.length)expWIdx=0;
-      }
-      
-      void actExplain(float q_nx[],ExpData ed) throws Exception
-      {
-        throw new Exception("You have to Override actExplain method");
-      }
-      
-      float Q_nx[];
-      void QlearningTrain(s_neuron_net nn,ExpData ed,float lRate)
-      {
-        if(Q_nx==null||Q_nx.length<nn.output.length)Q_nx=new float[nn.output.length];
-        
-        //Q(s,a)=r(s,a)+garmma*max_a'_(Q(s',a'))
-        //Get Q(s',a')=>Q_nx
-        for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate_next[i];
-        nn.calc();
-        for(int i=0;i<nn.output.length;i++)Q_nx[i]=nn.output[i].latestVar;
-        
-        try{
-          actExplain(Q_nx, ed);
-          float Q_x[]=Q_nx;
-          nn.TestTrain(ed.S_tate,Q_x,lRate,false,true);
-        }
-        catch (Exception e) 
-        {
-        }
-      }
-      
-    }
-    
-    QLearningCore QL=new QLearningCore(100, InX[0].length, OuY[0].length){
-     void actExplain(float q_nx[],ExpData ed)
-      {
-        //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
-        //if(ed.R_eward!=0)print(ed.R_eward);
-        float garmma=0.95;
-        
-        int selIdx=(ed.A_ct[0]>ed.A_ct[1])?0:1;
-        float maxQ_next_act=(q_nx[0]>q_nx[1])?q_nx[0]:q_nx[1];
-        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
-        q_nx[1-selIdx]=Float.NaN;  
-          
-        
-        selIdx=(ed.A_ct[2]>ed.A_ct[3])?2:3;
-        maxQ_next_act=(q_nx[2]>q_nx[3])?q_nx[2]:q_nx[3];
-        q_nx[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act);
-        q_nx[5-selIdx]=Float.NaN;  
-        
-        for(int i=4;i<q_nx.length;i++)//other don't care
-          q_nx[i]=Float.NaN;  
-          
-      }
-    };
+
     
     ExpData thisExp=new ExpData(0,0);
     void ReinforcementTraining(float reward,int iter)//+ for reward
@@ -285,15 +192,17 @@ class mFixture{
       float nstate[]=InX[currentIdx];
       thisExp.ExpLink(state,act,reward,nstate);
       
-      if(reward!=0||random(0,1)>0.8)
+      if(reward!=0||random(0,1)>0.98)
       {
         println(reward);
         QL.pushExp(state,act,reward,nstate);
-      }
-      QL.QlearningTrain(nn,thisExp,0.1);
       
-      for(int i=0;i<10;i++)
-        QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.expReplaySet.length)],0.1);
+        for(int i=0;i<200;i++)
+          QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.getAvalibleExpSize())],0.1,false);
+        nn.Update_dW(0.1);
+          
+      }
+      QL.QlearningTrain(nn,thisExp,0.1,true);
       
     }
     void BoostingTraining(float alpha)//+ for reward
@@ -348,7 +257,7 @@ class mCreature extends mFixture{
   
   void reset()
   {
-    size=20;
+    size=10;
     mess=1;
     pos.x=random(-300,300);
     pos.y=random(-300,300);
@@ -369,16 +278,17 @@ class mCreature extends mFixture{
     {
       mCreature cobj=(mCreature)collideObj;
       if(cobj.lifeTime<5)return;
+      Reward=-0.4;
     }
     else
     {
+      Reward=-0.8;
+      lifeTime=0;
+      pos.x=random(-200,200);
+      pos.y=random(-200,200);
+      speed.x=random(-1,1);
+      speed.y=random(-1,1);
     }
-    Reward=-5;
-    lifeTime=0;
-    pos.x=random(-200,200);
-    pos.y=random(-200,200);
-    speed.x=random(-1,1);
-    speed.y=random(-1,1);
     
   }
   
@@ -431,12 +341,16 @@ class mCreature extends mFixture{
       float distret=env.testBeamCollide(pos,speedAngle+eye_spreadAngle*PI/180*i,ret_intersect, retCollide);
       if(minDist>distret)minDist=distret;
       if(maxDist<distret)maxDist=distret;
-      CC.in_eyesBeam[i]=100/distret;
+      if(distret>150)distret=150;
+      CC.in_eyesBeam[i]=distret/150;
       if(retCollide[0] instanceof mCreature)
       {
         mCreature collideCre = (mCreature)retCollide[0];
-        
+        //Reward+=0.03;
         //collideCre.CC.in_peerInfo+=CC.ou_expectReward;
+      }
+      else
+      {
       }
 
     }
@@ -445,7 +359,7 @@ class mCreature extends mFixture{
     if(lifeTime>500&&minDist>100)
     {
       lifeTime=0;
-      Reward=0.2;
+      Reward+=0.2;
     }
       
     CC.UpdateNeuronInput();
@@ -459,19 +373,19 @@ class mCreature extends mFixture{
     //turnHist.Draw(CC.ou_turnSpeed*10,0,300,width,500);
     if(CC.ou_speedUp>CC.ou_speedDown)
     {
-      speed.mult(1.01);
+      speed.mult(1.1);
     }
     else
     {
-      speed.mult(1/1.01);
+      speed.mult(1/1.1);
     }
     
     //speed.mult(CC.ou_speedAdj);
     speedAbs=speed.mag();
-    CC.in_currentSpeed=speedAbs/2;
+    CC.in_currentSpeed=speedAbs/3;
     
     float turn=CC.ou_turnLeft>CC.ou_turnRight?1:-1;
-    
+    turn*=1.5;
     rotation_speed(turn*PI/180);
     turnAmount+=turn;
     
@@ -480,7 +394,7 @@ class mCreature extends mFixture{
       turnAmount=0;
       
       lifeTime=0;
-      Reward=-0.2;
+      Reward+=-0.2;
     }
     //stroke(128,200,0,100);
     //speedHist.Draw(CC.ou_speedAdj*10,0,300,width,500);
@@ -504,7 +418,7 @@ class mCreature extends mFixture{
   }
   void postUpdate(mFixtureEnv env)
   {
-    CC.nn.PreTrainProcess(0.01);
+    CC.nn.PreTrainProcess(0.03);
     CC.ReinforcementTraining(Reward,1);
     Reward=0;
   }
@@ -698,11 +612,11 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     //turnHist.Draw(CC.ou_turnSpeed*10,0,300,width,500);
     if(CC.ou_speedUp>CC.ou_speedDown)
     {
-      speed.mult(1.01);
+      speed.mult(1.1);
     }
     else
     {
-      speed.mult(1/1.01);
+      speed.mult(1/1.1);
     }
     
     //speed.mult(CC.ou_speedAdj);
@@ -710,7 +624,7 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     CC.in_currentSpeed=speedAbs/2;
     
     float turn=CC.ou_turnLeft>CC.ou_turnRight?1:-1;
-    
+    turn*=1.5;
     
     
     //speed.mult(CC.ou_speedAdj);
@@ -737,10 +651,10 @@ class mCreatureEv extends mCreature implements Comparable<mCreatureEv>{
     {
       speed.mult(0.9);
     }
-    else if(speedAbs<0.5)
+    else if(speedAbs<0.2)
       speed.mult(1.1);
 
-    lifeTime+=speed.mag()/5+0.5;
+    lifeTime+=1;//speed.mag()/5+0.5;
     pos.add(speed);
   }
   void draw(float offsetX,float offsetY)

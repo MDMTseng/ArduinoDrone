@@ -338,7 +338,7 @@ class s_neuron_net{
         float d=layer[i].W[j];
         
         layer[i].W[j]+=random(-1,1)*0.00001;
-        layer[i].W[j]*=growthSpeed;
+        layer[i].W[j]*=random(1,growthSpeed);
         d=d*d;
         if(maxWIdx<d)
         {
@@ -346,7 +346,6 @@ class s_neuron_net{
           maxWIdx=j;
         }
       }
-      layer[i].W[maxWIdx]*=growthSpeed;
     }
     
   }
@@ -573,15 +572,15 @@ class s_neuron_net{
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       s_neuron layer[]=this.ns.get(i);
-      SupressL2(layer,rate*0.003);
-      SupressL1X(layer,rate*0.0001);
+      SupressL2(layer,rate*0.01);
+      SupressL1X(layer,rate*0.001);
     }
     
     for (int i=this.ns.size()-1;i!=0;i--)
     {
       s_neuron layer[]=this.ns.get(i);
       //AttractSimNode(layer,0.70,0.80);
-      AttractSimNode2(layer,0.80,0.001*rate);
+      AttractSimNode2(layer,0.80,0.01*rate);
       TrimSimNode(layer,0.99);
       //NeuronNodePolarizing(this.ns.get(i),0.9);
       NeuronNodeRevive(layer,0.8,1+rate/50);
@@ -979,4 +978,110 @@ class s_neuron_net{
         }
       }
     }
+}
+
+
+class ExpData
+{
+  /*
+  (s(tate),a(ct),r(eward),s'(tate next))
+  */
+    
+  float S_tate[];//current input
+  float A_ct[];//output act decision
+  float R_eward;
+  float S_tate_next[];//next input after current act
+  
+  ExpData(int stateDim,int actDim)
+  {
+    S_tate=new float[stateDim];
+    S_tate_next=new float[stateDim];
+    A_ct=new float[actDim];
+  }
+  
+  
+  ExpData(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
+  {
+    ExpLink(S_tate,A_ct,R_eward,S_tate_next);
+  }
+  
+  
+  void ExpAssign(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
+  {
+    this.R_eward=R_eward;
+    for(int i=0;i<S_tate.length;i++)
+    {
+      this.S_tate[i]=S_tate[i];
+      if(S_tate_next==null)
+       this.S_tate_next[i]=0;
+      else
+       this.S_tate_next[i]=S_tate_next[i];
+    }
+    for(int i=0;i<A_ct.length;i++)
+    {
+      this.A_ct[i]=A_ct[i];
+    }
+  }
+  void ExpLink(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])
+  {
+    this.S_tate=S_tate;
+    this.A_ct=A_ct;
+    this.R_eward=R_eward;
+    this.S_tate_next=S_tate_next;
+  }
+}
+class QLearningCore
+{
+  int expWIdx=0;
+  int expSetAvalibleL;
+  ExpData expReplaySet[];
+  QLearningCore(int size, int stateDim,int actDim)
+  {
+    expReplaySet=new ExpData[size];
+    for(int i=0;i<expReplaySet.length;i++)
+    {
+      expReplaySet[i]=new ExpData(stateDim,actDim);
+    }
+    expSetAvalibleL=0;
+  }
+  
+  void pushExp(float S_tate[],float A_ct[],float R_eward,float S_tate_next[])//for terminal state set S_tate_next to null
+  {
+    expReplaySet[expWIdx].ExpAssign(S_tate,A_ct,R_eward,S_tate_next);
+    if(++expWIdx>=expReplaySet.length)expWIdx=0;
+    if(expSetAvalibleL<expReplaySet.length)expSetAvalibleL++;
+  }
+  
+  int getAvalibleExpSize()
+  {
+    return expSetAvalibleL;
+  }
+  
+  void actExplain(float q_nx[],ExpData ed) throws Exception
+  {
+    throw new Exception("You have to Override actExplain method");
+  }
+  
+  float Q_nx[];
+  void QlearningTrain(s_neuron_net nn,ExpData ed,float lRate,boolean dW_update)
+  {
+    if(Q_nx==null||Q_nx.length<nn.output.length)Q_nx=new float[nn.output.length];
+    
+    //Q(s,a)=r(s,a)+garmma*max_a'_(Q(s',a'))
+    //Get Q(s',a')=>Q_nx
+    for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate_next[i];
+    nn.calc();
+    for(int i=0;i<nn.output.length;i++)Q_nx[i]=nn.output[i].latestVar;
+    
+    try{
+      actExplain(Q_nx, ed);
+      float Q_x[]=Q_nx;
+      nn.TestTrain(ed.S_tate,Q_x,lRate,false,dW_update);
+    }
+    catch (Exception e) 
+    {
+      println(e);
+    }
+  }
+  
 }

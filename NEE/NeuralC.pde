@@ -1,7 +1,7 @@
 class NeuralC{
 
   mFixtureEnv env=new mFixtureEnv(860,500);
-  mCreature cres[] = new mCreature[8];
+  mCreature cres[] = new mCreature[15];
   ConsciousCenter ccset[] = new ConsciousCenter[cres.length];
   
   
