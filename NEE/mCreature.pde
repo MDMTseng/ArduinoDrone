@@ -36,7 +36,7 @@ class mFixture{
 
 
     
-    QLearningCore QL=new QLearningCore(100, 9, 4){
+    QLearningCore QL=new QLearningCore(1000, 9, 4){
      void actExplain(float q_nx[],ExpData ed)
       {
         //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
@@ -197,9 +197,12 @@ class mFixture{
         println(reward);
         QL.pushExp(state,act,reward,nstate);
       
-        for(int i=0;i<200;i++)
-          QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.getAvalibleExpSize())],0.1,false);
-        nn.Update_dW(0.1);
+        for(int i=0;i<20;i++)
+        {
+          for(int j=0;j<10;j++)
+            QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.getAvalibleExpSize())],0.1,false);
+          nn.Update_dW(0.1/10);
+        }
           
       }
       QL.QlearningTrain(nn,thisExp,0.1,true);
@@ -257,7 +260,7 @@ class mCreature extends mFixture{
   
   void reset()
   {
-    size=10;
+    size=15;
     mess=1;
     pos.x=random(-300,300);
     pos.y=random(-300,300);
@@ -418,7 +421,7 @@ class mCreature extends mFixture{
   }
   void postUpdate(mFixtureEnv env)
   {
-    CC.nn.PreTrainProcess(0.03);
+    CC.nn.PreTrainProcess(0.01);
     CC.ReinforcementTraining(Reward,1);
     Reward=0;
   }
