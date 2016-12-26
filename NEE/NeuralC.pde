@@ -99,6 +99,8 @@ class NeuralC{
       for(mCreature cre:cres)
       {
         cre.guideGate=guideG;
+        cre.CC.
+        elpsExplore=guideG;
         cre.CC.set_expShareList(guideG?null:ccset);
       }
       println(guideG);

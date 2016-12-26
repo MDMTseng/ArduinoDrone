@@ -36,7 +36,7 @@ class mFixture{
 
 
     
-    QLearningCore QL=new QLearningCore(1000, 9, 4){
+    RLearningCore QL=new RLearningCore(1000, 9, 4){
      void actExplain(float q_nx[],ExpData ed)
       {
         //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
@@ -56,6 +56,30 @@ class mFixture{
         
         for(int i=4;i<q_nx.length;i++)//other don't care
           q_nx[i]=Float.NaN;  
+          
+      }
+      
+      
+      
+     void actExplainX(float q_err[],float q_cx[],float q_nx[],ExpData ed)
+      {
+        //r(s,a)+garmma*max_a'_(Q_nx) => Q_nx
+        //if(ed.R_eward!=0)print(ed.R_eward);
+        float garmma=0.98;
+        
+        int selIdx=(ed.A_ct[0]>ed.A_ct[1])?0:1;
+        float maxQ_next_act=(q_nx[0]>q_nx[1])?q_nx[0]:q_nx[1];
+        q_err[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act)-q_cx[selIdx];
+        q_err[1-selIdx]=0;  
+          
+        
+        selIdx=(ed.A_ct[2]>ed.A_ct[3])?2:3;
+        maxQ_next_act=(q_nx[2]>q_nx[3])?q_nx[2]:q_nx[3];
+        q_err[selIdx]=(ed.R_eward+(garmma)*maxQ_next_act)-q_cx[selIdx];
+        q_err[5-selIdx]=0;  
+        
+        for(int i=4;i<q_nx.length;i++)//other don't care
+          q_err[i]=0;  
           
       }
     };
@@ -119,6 +143,7 @@ class mFixture{
     }
         
     int InoutIdx=0;
+    boolean elpsExplore=false;
     void UpdateNeuronInput()
     {
       skipIdx=(skipIdx+1)%1;
@@ -159,13 +184,16 @@ class mFixture{
         OuY[InoutIdx][j]=nn.output[j].latestVar;
       }
       i=0;
-      if(random(0,1)>0.90)
+      if(elpsExplore)
       {
-        OuY[InoutIdx][0]+=(random(0,1)>0.5)?100:-100;
-      }
-      if(random(0,1)>0.90)
-      {
-        OuY[InoutIdx][2]+=(random(0,1)>0.5)?100:-100;
+        if(random(0,1)>0.50)
+        {
+          OuY[InoutIdx][0]+=(random(0,1)>0.5)?100:-100;
+        }
+        if(random(0,1)>0.50)
+        {
+          OuY[InoutIdx][2]+=(random(0,1)>0.5)?100:-100;
+        }
       }
       ou_turnLeft=OuY[InoutIdx][i++];
       ou_turnRight=OuY[InoutIdx][i++];
@@ -200,12 +228,12 @@ class mFixture{
         for(int i=0;i<20;i++)
         {
           for(int j=0;j<10;j++)
-            QL.QlearningTrain(nn,QL.expReplaySet[(int)random(0,QL.getAvalibleExpSize())],0.1,false);
+            QL.RlearningTrainX(nn,QL.expReplaySet[(int)random(0,QL.getAvalibleExpSize())],0.1,false);
           nn.Update_dW(0.1/10);
         }
           
       }
-      QL.QlearningTrain(nn,thisExp,0.1,true);
+      QL.RlearningTrainX(nn,thisExp,0.1,true);
       
     }
     void BoostingTraining(float alpha)//+ for reward

@@ -300,7 +300,7 @@ class s_neuron_net{
       prelayer=currentlayer;
       currentlayer=new s_neuron[netDim[i]];
       
-      s_neuron_actFunc actFun=(i==netDim.length-1)?actFun_tanh:actFun_tanh;
+      s_neuron_actFunc actFun=(i==netDim.length-1)?actFun_tanh:actFun_ReLU;
       for(int j=0;j<currentlayer.length;j++)
       {
         currentlayer[j] = new s_neuron(1,actFun);
@@ -788,11 +788,11 @@ class s_neuron_net{
     }
     
     
-    return TrainSetErr(lRate,crossEn,update_dW);
+    return TrainErr(lRate,crossEn,update_dW);
     
   }
   
-  float TrainSetErr(float lRate,boolean crossEn,boolean update_dW)//To use this you need to set trainError at output layer
+  float TrainErr(float lRate,boolean crossEn,boolean update_dW)//To use this you need to set trainError at output layer
   {
     for (int i=this.ns.size()-2;i>=0;i--)//last layer is set
     {
@@ -1030,12 +1030,12 @@ class ExpData
     this.S_tate_next=S_tate_next;
   }
 }
-class QLearningCore
+class RLearningCore
 {
   int expWIdx=0;
   int expSetAvalibleL;
   ExpData expReplaySet[];
-  QLearningCore(int size, int stateDim,int actDim)
+  RLearningCore(int size, int stateDim,int actDim)
   {
     expReplaySet=new ExpData[size];
     for(int i=0;i<expReplaySet.length;i++)
@@ -1062,21 +1062,58 @@ class QLearningCore
     throw new Exception("You have to Override actExplain method");
   }
   
-  float Q_nx[];
-  void QlearningTrain(s_neuron_net nn,ExpData ed,float lRate,boolean dW_update)
+  float R_nx[];
+  void RlearningTrain(s_neuron_net nn,ExpData ed,float lRate,boolean dW_update)
   {
-    if(Q_nx==null||Q_nx.length<nn.output.length)Q_nx=new float[nn.output.length];
+    if(R_nx==null||R_nx.length!=nn.output.length)R_nx=new float[nn.output.length];
     
     //Q(s,a)=r(s,a)+garmma*max_a'_(Q(s',a'))
     //Get Q(s',a')=>Q_nx
     for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate_next[i];
     nn.calc();
-    for(int i=0;i<nn.output.length;i++)Q_nx[i]=nn.output[i].latestVar;
+    for(int i=0;i<nn.output.length;i++)R_nx[i]=nn.output[i].latestVar;
     
     try{
-      actExplain(Q_nx, ed);
-      float Q_x[]=Q_nx;
-      nn.TestTrain(ed.S_tate,Q_x,lRate,false,dW_update);
+      actExplain(R_nx, ed);
+      float R_x[]=R_nx;
+      nn.TestTrain(ed.S_tate,R_x,lRate,false,dW_update);
+    }
+    catch (Exception e) 
+    {
+      println(e);
+    }
+  }
+    
+  void actExplainX(float q_err[],float q_cx[],float q_nx[],ExpData ed) throws Exception
+  {
+    throw new Exception("You have to Override actExplain method");
+  }
+  
+  float R_cx[];
+  float R_err[];
+  void RlearningTrainX(s_neuron_net nn,ExpData ed,float lRate,boolean dW_update)
+  {
+    if(R_nx==null||R_nx.length!=nn.output.length)R_nx=new float[nn.output.length];
+    if(R_cx==null||R_cx.length!=nn.output.length)R_cx=new float[nn.output.length];
+    if(R_err==null||R_err.length!=nn.output.length)R_err=new float[nn.output.length];
+    
+    for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate_next[i];
+    nn.calc();
+    for(int i=0;i<nn.output.length;i++)R_nx[i]=nn.output[i].latestVar;
+    
+    
+    for(int i=0;i<nn.input.length;i++)nn.input[i].latestVar=ed.S_tate[i];
+    nn.calc();
+    for(int i=0;i<nn.output.length;i++)R_cx[i]=nn.output[i].latestVar;
+    
+    try{
+      actExplainX(R_err,R_cx,R_nx, ed);
+      
+      for(int k=0;k<nn.output.length;k++)
+      {
+          nn.output[k].trainError=R_err[k];
+      }
+      nn.TrainErr(lRate,false,dW_update);
     }
     catch (Exception e) 
     {
