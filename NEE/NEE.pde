@@ -12,8 +12,8 @@ void draw()
 {
    
   //nt.X2();
-  nvc.draw();
-  //reC.update();
+  //nvc.draw();
+  reC.update();
 }
 
 float scrollingSpeed=0.000;
