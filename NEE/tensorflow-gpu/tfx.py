@@ -12,7 +12,7 @@ def stepFunc(arr):
     return ret
 
 data_range = [-0.5, 0.5]
-sampleNum=30;
+sampleNum=60;
 
 t=numpy.linspace(0,1,sampleNum);
 train_X = numpy.asarray(t-0.5)*5
@@ -26,12 +26,12 @@ train_Y = numpy.reshape(train_Y, [n_samples, 1])
 
 # Parameters
 learning_rate = 0.0001
-training_epochs = 800
-display_step = 10
+training_epochs = 1000
+display_step = 5
 
 # tf Graph Input
-X = tf.placeholder("float64")
-Y = tf.placeholder("float64")
+X = tf.placeholder("float64",[None, 1])
+Y = tf.placeholder("float64",[None, 1])
 
 
 
@@ -50,10 +50,7 @@ def multi_perc_network(weightObj,base_input):
     count = 0;
     p_output = base_input
     for tfLayer in retTFWs:
-        if (count == 0):
-            temp_O = tf.add(tf.mul(p_output, tfLayer['ws']), tfLayer['bs'])
-        else:
-            temp_O = tf.add(tf.matmul(p_output, tfLayer['ws']), tfLayer['bs'])
+        temp_O = tf.add(tf.matmul(p_output, tfLayer['ws']), tfLayer['bs'])
         count=count+1
         p_output = tf.nn.tanh(temp_O);
 
@@ -78,16 +75,19 @@ with tf.Session() as sess:
 
     print(NetObj['TFWs'][0]['ws'].eval())
     print(NetObj['TFWs'][0]['bs'].eval())
+    cost_hist = []
+    batchNum=55
     # Fit all training data
     for epoch in range(training_epochs):
-        trainIdxArr = numpy.arange(sampleNum)
+        trainIdxArr = numpy.arange(sampleNum-batchNum)
         rng.shuffle(trainIdxArr)
         for i in trainIdxArr:
-            sess.run(optimizer, feed_dict={X: train_X[i,0], Y: train_Y[i,0]})
+            sess.run(optimizer, feed_dict={X: train_X[i:i+batchNum,:], Y: train_Y[i:i+batchNum,:]})
 
         # Display logs per epoch step
         if (epoch+1) % display_step == 0:
             c = sess.run(cost, feed_dict={X: train_X, Y:train_Y})
+            cost_hist.append(c);
             print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(c))
 
     print("Optimization Finished!")
@@ -101,3 +101,7 @@ with tf.Session() as sess:
     plt.show()
     print(NetObj['TFWs'][0]['ws'].eval())
     print(NetObj['TFWs'][0]['bs'].eval())
+
+
+    plt.plot(cost_hist)
+    plt.show()
