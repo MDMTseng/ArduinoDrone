@@ -12,10 +12,10 @@ def stepFunc(arr):
     return ret
 
 data_range = [-0.5, 0.5]
-sampleNum=80;
+sampleNum=30;
 
 t=numpy.linspace(0,1,sampleNum);
-train_X = numpy.asarray(t-0.5)
+train_X = numpy.asarray(t-0.5)*5
 #train_Y = numpy.asarray(stepFunc(t-0.5)*numpy.sin(16*(t-0.5)))*0.5
 train_Y = numpy.asarray(numpy.sin(16*(t*t)))*0.5
 
@@ -25,8 +25,8 @@ train_X = numpy.reshape(train_X, [n_samples, 1])
 train_Y = numpy.reshape(train_Y, [n_samples, 1])
 
 # Parameters
-learning_rate = 0.005
-training_epochs = 500
+learning_rate = 0.0001
+training_epochs = 800
 display_step = 10
 
 # tf Graph Input
@@ -38,7 +38,7 @@ Y = tf.placeholder("float64")
 def multi_perc_weight_init(dims):
     retWs=[]
     for i in range(len(dims)-1):
-        retWs.append({'ws':rng.randn(dims[i],dims[i+1]), 'bs': rng.randn(dims[i+1])})
+        retWs.append({'ws':rng.randn(dims[i],dims[i+1]), 'bs': rng.randn(1,dims[i+1])})
         print(retWs[i]['ws'].shape,">>",retWs[i]['bs'].shape)
     return retWs
 
@@ -59,16 +59,16 @@ def multi_perc_network(weightObj,base_input):
 
     return {'TFWs':retTFWs, 'Output': p_output}
 
-weightObj = multi_perc_weight_init([1, 15, 15, 15,1]);
+weightObj = multi_perc_weight_init([1, 35, 35, 35, 35,1]);
 NetObj = multi_perc_network(weightObj,X)
 pred = NetObj['Output'];
 
 # Mean squared error
 cost = tf.reduce_sum(tf.pow(pred-Y, 2))/(2*n_samples)
 
-rate = tf.train.exponential_decay(learning_rate, cost, 1, 0.999)
+rate = tf.train.exponential_decay(learning_rate, cost, 1, 0.96)
 # Gradient descent
-optimizer = tf.train.AdagradOptimizer(rate).minimize(cost)
+optimizer = tf.train.AdamOptimizer(rate).minimize(cost)
 
 # Initializing the variables
 init = tf.global_variables_initializer()
@@ -76,9 +76,13 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
 
+    print(NetObj['TFWs'][0]['ws'].eval())
+    print(NetObj['TFWs'][0]['bs'].eval())
     # Fit all training data
     for epoch in range(training_epochs):
-        for i in range(sampleNum):
+        trainIdxArr = numpy.arange(sampleNum)
+        rng.shuffle(trainIdxArr)
+        for i in trainIdxArr:
             sess.run(optimizer, feed_dict={X: train_X[i,0], Y: train_Y[i,0]})
 
         # Display logs per epoch step
@@ -95,3 +99,5 @@ with tf.Session() as sess:
     plt.plot(train_X,sess.run(pred, feed_dict={X: train_X, Y: train_Y}), label='Fitted line')
     plt.legend()
     plt.show()
+    print(NetObj['TFWs'][0]['ws'].eval())
+    print(NetObj['TFWs'][0]['bs'].eval())
