@@ -11,13 +11,23 @@ def stepFunc(arr):
         ret.append((1,0)[ele<0])
     return ret
 
-data_range = [-0.5, 0.5]
-sampleNum=60;
 
-t=numpy.linspace(0,1,sampleNum);
+def sqFunc(arr,start,stop):
+    ret=[]
+    for ele in arr:
+        ret.append((0,1)[ele>=start and ele<stop])
+    return ret
+
+data_range = [-0.5, 0.5]
+
+t=numpy.linspace(0,1,80);
 train_X = numpy.asarray(t-0.5)*5
-#train_Y = numpy.asarray(stepFunc(t-0.5)*numpy.sin(16*(t-0.5)))*0.5
-train_Y = numpy.asarray(numpy.sin(16*(t*t)))*0.5
+train_Y = 0.5*numpy.asarray( \
+              sqFunc( t,0.5,1.1 )* numpy.sin(16*(t-0.5))  \
+             -sqFunc(  t,0,0.5  )* 1 \
+             +sqFunc(  t,0.2,0.8)* (0.5-t) \
+             )
+#train_Y = numpy.asarray(numpy.sin(40*(t*t)))*0.5
 
 n_samples = train_X.shape[0]
 
@@ -25,8 +35,9 @@ train_X = numpy.reshape(train_X, [n_samples, 1])
 train_Y = numpy.reshape(train_Y, [n_samples, 1])
 
 # Parameters
-learning_rate = 0.0001
-training_epochs = 1000
+learning_rate = 0.001
+training_epochs = 500
+errorStop = 0.00005
 display_step = 5
 
 # tf Graph Input
@@ -51,12 +62,18 @@ def multi_perc_network(weightObj,base_input):
     p_output = base_input
     for tfLayer in retTFWs:
         temp_O = tf.add(tf.matmul(p_output, tfLayer['ws']), tfLayer['bs'])
+        if count < len(retTFWs)-1:
+            if(count == len(retTFWs)-2 ):
+                p_output = tf.nn.tanh(temp_O);
+            else:
+                p_output = tf.nn.tanh(temp_O);
+        else:
+            p_output = tf.nn.tanh(temp_O);
         count=count+1
-        p_output = tf.nn.tanh(temp_O);
 
     return {'TFWs':retTFWs, 'Output': p_output}
 
-weightObj = multi_perc_weight_init([1, 35, 35, 35, 35,1]);
+weightObj = multi_perc_weight_init([1, 35, 35, 1]);
 NetObj = multi_perc_network(weightObj,X)
 pred = NetObj['Output'];
 
@@ -72,14 +89,11 @@ init = tf.global_variables_initializer()
 # Launch the graph
 with tf.Session() as sess:
     sess.run(init)
-
-    print(NetObj['TFWs'][0]['ws'].eval())
-    print(NetObj['TFWs'][0]['bs'].eval())
     cost_hist = []
-    batchNum=55
+    batchNum=n_samples*5//6
     # Fit all training data
     for epoch in range(training_epochs):
-        trainIdxArr = numpy.arange(sampleNum-batchNum)
+        trainIdxArr = numpy.arange(n_samples-batchNum)
         rng.shuffle(trainIdxArr)
         for i in trainIdxArr:
             sess.run(optimizer, feed_dict={X: train_X[i:i+batchNum,:], Y: train_Y[i:i+batchNum,:]})
@@ -89,6 +103,9 @@ with tf.Session() as sess:
             c = sess.run(cost, feed_dict={X: train_X, Y:train_Y})
             cost_hist.append(c);
             print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(c))
+            if c < errorStop:
+                print("Good enough, Break")
+                break
 
     print("Optimization Finished!")
     training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
@@ -99,8 +116,6 @@ with tf.Session() as sess:
     plt.plot(train_X,sess.run(pred, feed_dict={X: train_X, Y: train_Y}), label='Fitted line')
     plt.legend()
     plt.show()
-    print(NetObj['TFWs'][0]['ws'].eval())
-    print(NetObj['TFWs'][0]['bs'].eval())
 
 
     plt.plot(cost_hist)
