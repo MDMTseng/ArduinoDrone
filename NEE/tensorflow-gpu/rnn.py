@@ -67,6 +67,18 @@ def cascade_forward_network(netObj,weightObj,net_input,act_func_tf=tf.nn.tanh):
         p_output = act_func_tf(temp_O);
     return {'TFWs':netObj['TFWs']+retTFWs, 'Output': p_output}
 
+def cascade_recurrent_network(netObj,weightObj,net_input,act_func_tf=tf.nn.tanh):
+    if netObj is None:
+        return {'TFWs':[], 'Output': net_input}
+    retTFWs=[];
+    for layerW in weightObj:
+        retTFWs.append({'ws':tf.Variable(layerW['ws']), 'bs':tf.Variable(layerW['bs'])})
+    p_output = net_input
+    for tfLayer in retTFWs:
+        temp_O = tf.add(tf.matmul(p_output, tfLayer['ws']), tfLayer['bs'])
+        p_output = act_func_tf(temp_O);
+    return {'TFWs':netObj['TFWs']+retTFWs, 'Output': p_output}
+
 
 NetObj = cascade_forward_network(None,None,X);
 
