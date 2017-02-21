@@ -7,11 +7,11 @@ import numpy.random as rng
 
 
 hm_epochs = 1300
-hm_batch_size = 1200
+hm_batch_size = 800
 
 input_dim = 1
 output_dim = 1
-time_span = 50
+time_span = 150
 rnn_size = 50
 
 def sqFunc(arr,start,stop):
@@ -23,7 +23,7 @@ def sqFunc(arr,start,stop):
 def GenXYSignal(start_t,stop_t,N):
     t=numpy.linspace(start_t,stop_t,N);
     X = numpy.asarray(sqFunc(  t,0.0,0.1 ))
-    Y = numpy.asarray(sqFunc(  t,0.1,1.5 )*numpy.sin(numpy.pi*5*t))
+    Y = numpy.asarray(sqFunc(  t,0.2,0.4 ))*0.8
     return X,Y
 
 
@@ -42,7 +42,7 @@ def GenXYSignalSets(randArr,N):
 
     return set_x,set_y
 
-[train_X_b,train_Y_b]=GenXYSignalSets(-rng.rand(hm_batch_size)/1.3,time_span)
+[train_X_b,train_Y_b]=GenXYSignalSets(-rng.rand(hm_batch_size)/2,time_span)
 train_X_b = train_X_b.reshape([hm_batch_size,time_span,input_dim])
 train_Y_b = train_Y_b.reshape([hm_batch_size,time_span,output_dim])
 
@@ -67,16 +67,20 @@ def recurrent_neural_network(x):
 
     print("x.get_shape()>>")
     print(x.get_shape())#(input batch size),n_chunks,chunk_size
-    x = tf.split(1, time_span, x)
-    print(x[0].get_shape())#(input batch size),1,chunk_size:[n_chunks]
-    x = [ tf.reshape(x_id, [-1, input_dim]) for x_id in x ]
-    print(x[0].get_shape())
-
     lstm_cell = rnn_cell.GRUCell(rnn_size)
-    outputs, states = rnn.rnn(lstm_cell, x, dtype=tf.float32)
-    print("outputs[-1].get_shape()>>")
-    print(outputs[-1].get_shape())
-    output_res = [ tf.nn.tanh(tf.matmul(output,layer['weights']) + layer['biases']) for output in outputs ]
+    outputs, states = rnn.dynamic_rnn(lstm_cell, x, dtype=tf.float32)
+    print("states.get_shape()>>")
+    print(states.get_shape())
+    print("outputs.get_shape()>>")
+    print(outputs.get_shape())
+    print("outputs[:,1,:].get_shape()>>")
+    print(outputs[:,1,:].get_shape())
+
+
+    output_res = [ tf.nn.tanh(tf.matmul(outputs[:,i,:],layer['weights']) + layer['biases']) for i in range(time_span) ]
+    print("output_res[-1].get_shape()>>")
+    print(output_res[-1].get_shape())
+
     return output_res
 
 
@@ -107,7 +111,7 @@ def train_neural_network(x):
 
             epoch_loss += c
             print('Epoch', epoch, 'completed out of',hm_epochs,'loss:',epoch_loss)
-            if(epoch_loss<0.01):break
+            if(epoch_loss<0.001):break
 
         for tryIdx in range(50):
             plt.plot(train_X_b[tryIdx,:,0], 'g-', label='X data')
