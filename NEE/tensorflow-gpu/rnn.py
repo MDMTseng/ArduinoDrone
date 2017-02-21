@@ -93,12 +93,12 @@ def train_neural_network(x):
     print("y.get_shape()>>")
     print(y.get_shape())
 
-    cost = tf.reduce_sum(tf.pow(packed_pred-y, 2))
+    cost = tf.reduce_mean(tf.pow(packed_pred-y, 2))
     optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
 
         for epoch in range(hm_epochs):
             epoch_loss = 0
@@ -106,8 +106,8 @@ def train_neural_network(x):
             c,_ = sess.run([ cost, optimizer], feed_dict={x: train_X_b, y: train_Y_b})
 
             epoch_loss += c
-
             print('Epoch', epoch, 'completed out of',hm_epochs,'loss:',epoch_loss)
+            if(epoch_loss<0.01):break
 
         for tryIdx in range(50):
             plt.plot(train_X_b[tryIdx,:,0], 'g-', label='X data')
