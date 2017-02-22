@@ -67,15 +67,20 @@ def recurrent_neural_network(x):
 
     print("x.get_shape()>>")
     print(x.get_shape())#(input batch size),n_chunks,chunk_size
-    lstm_cell = rnn_cell.GRUCell(rnn_size)
-    outputs, states = rnn.dynamic_rnn(lstm_cell, x, dtype=tf.float32)
-    print("states.get_shape()>>")
-    print(states.get_shape())
+    gru_cell = rnn_cell.GRUCell(rnn_size)
+
+    state = tf.Variable(gru_cell.zero_state(batch_size=hm_batch_size,dtype=tf.float32), trainable=False)
+    outputs, new_state = rnn.dynamic_rnn(gru_cell, x, dtype=tf.float32, initial_state=state)
+    print("new_state.get_shape()>>")
+    print(new_state.get_shape())
     print("outputs.get_shape()>>")
     print(outputs.get_shape())
     print("outputs[:,1,:].get_shape()>>")
     print(outputs[:,1,:].get_shape())
 
+    #set state feed back to keep RNN state
+    with tf.control_dependencies([state.assign(new_state)]):
+        outputs = tf.identity(outputs)
 
     output_res = [ tf.nn.tanh(tf.matmul(outputs[:,i,:],layer['weights']) + layer['biases']) for i in range(time_span) ]
     print("output_res[-1].get_shape()>>")
@@ -114,9 +119,10 @@ def train_neural_network(x):
             if(epoch_loss<0.001):break
 
         for tryIdx in range(50):
+            pred_test=sess.run(packed_pred, feed_dict={x: train_X_b})
             plt.plot(train_X_b[tryIdx,:,0], 'g-', label='X data')
             plt.plot(train_Y_b[tryIdx,:,0], 'b-', label='Ground truth Y data')
-            plt.plot(sess.run(packed_pred, feed_dict={x: train_X_b[tryIdx:tryIdx+1,:,:]}).reshape([time_span]), 'ro', label='Fitted Y data')
+            plt.plot(pred_test[tryIdx:tryIdx+1,:,:].reshape([time_span]), 'ro', label='Fitted Y data')
             plt.legend()
             plt.show()
 
