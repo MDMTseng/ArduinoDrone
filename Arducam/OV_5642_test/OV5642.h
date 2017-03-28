@@ -1,0 +1,4 @@
+
+
+#define OV5642_MODEL OV2642
+#define OV5642_I2C_ADDR (0x78)
