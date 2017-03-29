@@ -50,7 +50,6 @@ int read_fifo_burst(mArduCAM_OV2640 myCAM)
 {
   uint32_t length = 0;
   
-  myCAM.SPI_CS_EN(1);
   int ret = myCAM.set_fifo_burst_begin(&length);//Set fifo burst mode
   if(ret != 0 )return ret;
 
@@ -65,7 +64,8 @@ int read_fifo_burst(mArduCAM_OV2640 myCAM)
     
     rest_len-=recvL;
   }
-  myCAM.SPI_CS_EN(0);
+
+  myCAM.set_fifo_burst_end();
   return 1;
 }
 

@@ -51,7 +51,7 @@ int mArduCAM_OV2640::clear_fifo_flag(void )
 {
   return I2C_W8bAd8bVa(i2c_addr, ARDUCHIP_FIFO, FIFO_CLEAR_MASK);
 }
-int mArduCAM_OV2640::read_fifo_length(void )
+uint32_t mArduCAM_OV2640::read_fifo_length(void )
 {
   uint32_t len1, len2, len3, length = 0;
   len1 = SPI_Get8b(SPI_REG_FIFO_SIZE1);
@@ -62,70 +62,68 @@ int mArduCAM_OV2640::read_fifo_length(void )
 }
 
 
-#define cbi(reg, bitmask) *reg &= ~bitmask
-#define sbi(reg, bitmask) *reg |= bitmask
-void mArduCAM_OV2640::SPI_CS_EN(uint8_t en)
-{ //enable low
-  if (en)
-    cbi(P_CS, B_CS);
-  else
-    sbi(P_CS, B_CS);
-}
-
-int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
+int mArduCAM_OV2640::set_fifo_burst_end()
 {
-
-  uint32_t len = read_fifo_length();
-
-  byte dat = SPI_REG_BURST_FIFO_READ;
-  SPI_Transfer(&dat);
-
-  if( len == 0 )return -1;
-
-  //Find fifo header and depelete residue
-  uint8_t temp = 0, temp_last = 0;
-  temp=0;
-  SPI_Transfer(&temp);
-  len --;
-  while ( len-- )
-  {
-    temp_last = temp;
-    temp=0;
-    SPI_Transfer(&temp);
-    if ((temp == 0xD8) & (temp_last == 0xFF))
-    {
-      break;
-    }
-  }
-
-  if(len==0)return -1;
-
-
-  if(fifoL) 
-    *fifoL=len;
   
   return 0;
+}
+int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
+{
+  SPI_CS_EN(1);
+  int ret=0;
+  do{
+    uint32_t len = read_fifo_length();
+  
+    byte dat = SPI_REG_BURST_FIFO_READ;
+    SPI_Transfer(&dat);
+  
+    if( len == 0 )
+    {
+      ret=-1;
+      break;
+    }
+  
+    //Find fifo header and depelete residue
+    uint8_t temp = 0, temp_last = 0;
+    temp=0;
+    SPI_Transfer(&temp);
+    len --;
+    while ( len-- )
+    {
+      temp_last = temp;
+      temp=0;
+      SPI_Transfer(&temp);
+      if ((temp == 0xD8) & (temp_last == 0xFF))
+      {
+        break;
+      }
+    }
+  
+    if( len == 0 )
+    {
+      ret=-1;
+      break;
+    }
+  
+  
+    if(fifoL) 
+      *fifoL=len;
+    ret = 0;
+  }while(0);
+  
+  SPI_CS_EN(0);
+  return ret;
 }
 
 int mArduCAM_OV2640::fifo_burst_recv(byte* buff, int recvL)
 {
-  return SPI_Transfer(buff,recvL);
+  
+  SPI_CS_EN(1);
+  int ret= SPI_Transfer(buff,recvL);
+  
+  SPI_CS_EN(0);
+  return ret;
 }
-
-/*int mArduCAM_OV2640::read_fifo_length(void )
-  {
-  SPI_reg reg_dat[3]={0};
-  uint32_t len1,len2,len3,length=0;
-  reg_dat[0].addr=SPI_REG_FIFO_SIZE1;
-  reg_dat[1].addr=SPI_REG_FIFO_SIZE2;
-  reg_dat[2].addr=SPI_REG_FIFO_SIZE3;
-  // |addr0:1B|blank:2B |addr1:1B|blank:2B |addr2:1B|blank:2B |
-  SPI_Transfer(reg_dat,sizeof(reg_dat));
-  // |zeros:1B|val :2B  |zeros:1B|val :2B  |zeros:1B|val :2B  |
-  reg_dat[2].val &= 0x7f;
-  length = ((reg_dat[2].val << 16) | (reg_dat[1].val << 8) | reg_dat[0].val) & 0x07fffff;
-  return length;
-  }*/
 int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
 {
   int ret = 0;
@@ -138,8 +136,6 @@ int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
 mArduCAM_OV2640::mArduCAM_OV2640(int CS_PIN)
 {
   i2c_addr = 0x30;
-  pinMode(CS, OUTPUT);
-  P_CS  = portOutputRegister(digitalPinToPort(CS_PIN));
-  B_CS  = digitalPinToBitMask(CS_PIN);
+  SPI_INIT(CS_PIN);
 
 }

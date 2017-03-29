@@ -19,19 +19,21 @@ struct SPI_reg {
 class mArduCAM_proto
 {
   public:
-  mArduCAM_proto();
   /*I2S*/
-  int Init( void );
-  int get_vid_pid( uint8_t *vid, uint8_t *pid);
+  virtual int Init( void );
+  virtual int get_vid_pid( uint8_t *vid, uint8_t *pid);
 
   
-  int flush_fifo(void);
-  int clear_fifo_flag(void);
-  int start_capture(void);
+  virtual int flush_fifo(void);
+  virtual int clear_fifo_flag(void);
+  virtual int start_capture(void);
 
   /*SPI*/
-  int read_fifo_length(void);
-  int set_fifo_burst(void);
+  
+  virtual int set_fifo_burst_begin(uint32_t *fifoL);
+  virtual int fifo_burst_recv(byte* buff, int recvL);
+  virtual int set_fifo_burst_end();
+
 
   
   /*
@@ -58,20 +60,6 @@ class mArduCAM_proto
   regsize B_CS;
   byte m_fmt;
   byte sensor_model;*/
-  static int I2C_WArr(byte devAddr,const byte *dat,int datL);
-  static int I2C_W8bAd8bVa(byte devAddr,byte addr,byte value);
-  static int I2C_WRegSet_PROGMEM_8b(byte devAddr,const struct sensor_reg *sreg_set,int reg_setL );
-  static int I2C_RArr(byte devAddr,byte *read_buff,size_t readL);
-  static int I2C_R8bAd8bVa(byte devAddr,byte addr, byte *rd);
-
-
-  static int SPI_Transfer(void *buf, size_t bufL);
-  static int SPI_Transfer(uint8_t *dat_io_swap);
-  static int SPI_Transfer(uint16_t *dat_io_swap);
-  static uint8_t SPI_Get8b(uint8_t addr);
-
-  
-  unsigned char i2c_addr;
 };
 
 
