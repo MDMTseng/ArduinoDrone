@@ -92,12 +92,6 @@ uint8_t mArduCAM_proto::SPI_Get8b(uint8_t addr)
 }
 
 
-
-
-
-
-
-
 mArduCAM_proto::mArduCAM_proto()
 {}
 

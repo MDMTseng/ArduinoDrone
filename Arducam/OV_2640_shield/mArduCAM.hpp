@@ -31,6 +31,7 @@ class mArduCAM_proto
 
   /*SPI*/
   int read_fifo_length(void);
+  int set_fifo_burst(void);
 
   
   /*
@@ -91,7 +92,13 @@ class mArduCAM_proto
 #define SPI_REG_FIFO_SIZE3        0x44  //Camera write FIFO size[18:16]
 
 
+#define SPI_REG_ARDUCHIP_TRIG          0x41  //Trigger source
+#define SPI_REG_VSYNC_MASK            0x01
+#define SPI_REG_SHUTTER_MASK          0x02
+#define SPI_REG_CAP_DONE_MASK         0x08
 
 
+#define SPI_REG_BURST_FIFO_READ      0x3C  //Burst FIFO read operation
+#define SPI_REG_SINGLE_FIFO_READ    0x3D  //Single FIFO read operation
 
 #endif

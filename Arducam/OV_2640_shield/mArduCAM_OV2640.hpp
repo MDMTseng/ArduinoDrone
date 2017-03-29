@@ -1,26 +1,36 @@
 #ifndef OV2640_REGS_H
 #define OV2640_REGS_H
 #include "mArduCAM.hpp"
+#include <pins_arduino.h>
 //#include <avr/pgmspace.h>
 
 
 
 
-
+#define regtype volatile uint8_t
+#define regsize uint8_t
 
 class mArduCAM_OV2640 : public mArduCAM_proto
 {
   public:
-  mArduCAM_OV2640();
+  mArduCAM_OV2640(int CS_PIN);
   int Init( void );
   int get_vid_pid( uint8_t *vid, uint8_t *pid);
   int flush_fifo(void);
   int clear_fifo_flag(void);
   int start_capture(void);
+  int set_fifo_burst_begin(uint32_t *fifoL);
+  int fifo_burst_recv(byte* buff, int recvL);
+
 
 
   /*SPI*/
   int read_fifo_length(void );
+  void SPI_CS_EN(uint8_t en);
+
+  protected:
+  regtype *P_CS;
+  regsize B_CS;
 };
 
 
