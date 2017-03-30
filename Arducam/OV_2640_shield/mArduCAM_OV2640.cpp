@@ -1,6 +1,7 @@
 #include "mArduCAM_OV2640.hpp"
 
 
+#include "commonTools.h"
 //#define DBUG_PRINT
 int mArduCAM_OV2640::Init()
 {
@@ -25,6 +26,11 @@ int mArduCAM_OV2640::Init()
   {
     ret = I2C_WRegSet_PROGMEM_8b(i2c_addr, OV2640_QVGA, sizeof(OV2640_QVGA));
     if (ret != 0)return ret;
+    printfx("uhhil\n");
+    I2C_W16bAd8bVa(i2c_addr,0x3818, 0x81);
+    printfx("uhhil\n");
+    I2C_W16bAd8bVa(i2c_addr,0x3621, 0xA7);
+    printfx("uhhil\n");
   }
 
 
@@ -53,6 +59,7 @@ int mArduCAM_OV2640::clear_fifo_flag(void )
 }
 uint32_t mArduCAM_OV2640::read_fifo_length(void )
 {
+  SPI_CS_EN(1);
   uint32_t len1, len2, len3, length = 0;
   len1 = SPI_Get8b(SPI_REG_FIFO_SIZE1);
   len2 = SPI_Get8b(SPI_REG_FIFO_SIZE2);
@@ -74,6 +81,9 @@ int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
   do{
     uint32_t len = read_fifo_length();
   
+    Serial.print("length:");
+    Serial.println(len);
+    
     byte dat = SPI_REG_BURST_FIFO_READ;
     SPI_Transfer(&dat);
   
@@ -111,7 +121,6 @@ int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
     ret = 0;
   }while(0);
   
-  SPI_CS_EN(0);
   return ret;
 }
 
@@ -121,7 +130,6 @@ int mArduCAM_OV2640::fifo_burst_recv(byte* buff, int recvL)
   SPI_CS_EN(1);
   int ret= SPI_Transfer(buff,recvL);
   
-  SPI_CS_EN(0);
   return ret;
 }
 int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
@@ -137,5 +145,19 @@ mArduCAM_OV2640::mArduCAM_OV2640(int CS_PIN)
 {
   i2c_addr = 0x30;
   SPI_INIT(CS_PIN);
-
+  SPI_CS_EN(1);
+  byte data[2];
+  while(1){
+    data[0]=0;
+    data[1]=0x22;
+    SPI_Transfer(data, sizeof(data));
+    if (data[1] == 0x55){
+      Serial.println(F("ACK CMD SPI interface OK."));break;
+    }else{
+      Serial.print(F("ACK CMD SPI interface Error!::"));
+      Serial.println(data[1],HEX);
+      delay(1000);continue;
+    }
+  }
+  SPI_CS_EN(0);
 }

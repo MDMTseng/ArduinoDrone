@@ -53,6 +53,11 @@ class mArduCAM_I2C
       byte buf[]={addr,value};
       return I2C_WArr(devAddr,buf,sizeof(buf));
     };
+    static int I2C_W16bAd8bVa(byte devAddr,uint16_t addr,byte value)
+    {
+      byte buf[]={addr>> 8,addr& 0x00FF,value};
+      return I2C_WArr(devAddr,buf,sizeof(buf));
+    };
     
       // Write 8 bit values to 8 bit register address
     static int I2C_WRegSet_PROGMEM_8b(byte devAddr,const struct sensor_reg *reg_set,int reg_setL )

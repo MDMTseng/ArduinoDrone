@@ -1,8 +1,9 @@
 
 #include <Wire.h>
 #include "mArduCAM_OV2640.hpp"
+#include "commonTools.h"
 
-mArduCAM_OV2640 cam_2MP(5);
+mArduCAM_OV2640 cam_2MP(53);
 void setup() {
   Wire.begin();        // join i2c bus (address optional for master)
   Serial.begin(9600);  // start serial for output
@@ -35,9 +36,14 @@ void loop() {
     printfx("mArduCAM_OV2640 start_capture failed: err: %d\n",ret);
   }
 
-
-  while (cam_2MP.SPI_Get8b(SPI_REG_ARDUCHIP_TRIG)&SPI_REG_CAP_DONE_MASK)
+  while (1)
+  {
+    byte trig= cam_2MP.SPI_Get8b(SPI_REG_ARDUCHIP_TRIG);
+    
+    printfx("trig:%x\n",trig);
+    if(trig&SPI_REG_CAP_DONE_MASK)break;
     delay(1);
+  }
   
   Serial.println(F("ACK CMD CAM Capture Done."));
   read_fifo_burst(cam_2MP);
@@ -51,6 +57,7 @@ int read_fifo_burst(mArduCAM_OV2640 myCAM)
   uint32_t length = 0;
   
   int ret = myCAM.set_fifo_burst_begin(&length);//Set fifo burst mode
+  printfx(">>set_fifo_burst_begin ret:%d<<\n",ret);
   if(ret != 0 )return ret;
 
   byte buffer[200];
@@ -60,7 +67,8 @@ int read_fifo_burst(mArduCAM_OV2640 myCAM)
     int recvL = (rest_len < sizeof(buffer))?rest_len:sizeof(buffer);
     myCAM.fifo_burst_recv(buffer, recvL);
     //TODO: deal with pixel data
-
+    
+    printfx(">>%d<<\n",rest_len);
     
     rest_len-=recvL;
   }
@@ -71,12 +79,3 @@ int read_fifo_burst(mArduCAM_OV2640 myCAM)
 
 
 
-void printfx(const char *format, ...)
-{
-  char buf[200];
-  va_list ap;
-    va_start(ap, format);
-    vsnprintf(buf, sizeof(buf), format, ap);
-    Serial.print(buf);
-    va_end(ap);
-}
