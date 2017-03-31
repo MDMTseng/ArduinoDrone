@@ -20,11 +20,12 @@ class mArduCAM_SPI
   static int SPI_Transfer(void *buf_io_swap, size_t bufL)
   {
     byte *buff=(byte *)buf_io_swap;
-    while ( bufL-- )
+    /*while ( bufL-- )
     {
       *buff =  SPI.transfer(*buff);
       buff++;
-    }
+    }*/
+    SPI.transfer(buff,bufL);
     return 0;
   };
   

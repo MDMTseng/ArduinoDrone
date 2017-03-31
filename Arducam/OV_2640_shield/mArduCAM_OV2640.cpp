@@ -5,6 +5,19 @@
 //#define DBUG_PRINT
 int mArduCAM_OV2640::Init()
 {
+
+
+  
+
+  uint8_t vid, pid;
+  get_vid_pid(&vid, &pid);
+  if ((vid != 0x26 ) && (( pid != 0x41 ) || ( pid != 0x42 ))) {
+    //Serial.println(F("ACK CMD Can't find OV2640 module!"));
+    return -1;
+  }
+
+
+  
   int ret;
   ret = I2C_W8bAd8bVa(i2c_addr, 0xff, 0x01);
   if (ret != 0)return ret;
@@ -26,36 +39,62 @@ int mArduCAM_OV2640::Init()
   {
     ret = I2C_WRegSet_PROGMEM_8b(i2c_addr, OV2640_QVGA, sizeof(OV2640_QVGA));
     if (ret != 0)return ret;
-    printfx("uhhil\n");
     I2C_W16bAd8bVa(i2c_addr,0x3818, 0x81);
-    printfx("uhhil\n");
     I2C_W16bAd8bVa(i2c_addr,0x3621, 0xA7);
-    printfx("uhhil\n");
   }
 
 
-  uint8_t vid, pid;
-  get_vid_pid(&vid, &pid);
-  if ((vid != 0x26 ) && (( pid != 0x41 ) || ( pid != 0x42 ))) {
-    //Serial.println(F("ACK CMD Can't find OV2640 module!"));
-    return -1;
-  }
+  byte data[4];
+  while(1){
+    data[0]=0|0x80;
+    data[1]=0x55;
+    data[2]=0x0;
+    data[3]=0x0;
+    SPI_CS_EN(1);
+    SPI_Transfer(data, 2);
+    SPI_CS_EN(0);
 
+    SPI_CS_EN(1);
+    SPI_Transfer(data+2, 2);
+    SPI_CS_EN(0);
+
+    
+    if (data[3] == 0x55){
+      Serial.println(F("ACK CMD SPI interface OK."));break;
+    }else{
+      Serial.print(F("ACK CMD SPI interface Error!::"));
+      Serial.println(data[2],HEX);
+      delay(1000);continue;
+    }
+  }
   return 0;
 }
 
 
 int mArduCAM_OV2640::start_capture(void)
 {
-  return I2C_W8bAd8bVa(i2c_addr, ARDUCHIP_FIFO, FIFO_CLEAR_MASK);
+  SPI_CS_EN(1);
+  byte data[]={ARDUCHIP_FIFO|0x80, FIFO_CLEAR_MASK};
+  SPI_Transfer(data, sizeof(data));
+  SPI_CS_EN(0);
+  return 0;
 }
 int mArduCAM_OV2640::flush_fifo(void)
 {
+  SPI_CS_EN(1);
+  byte data[]={ARDUCHIP_FIFO|0x80, FIFO_START_MASK};
+  SPI_Transfer(data, sizeof(data));
+  SPI_CS_EN(0);
+  return 0;
   return I2C_W8bAd8bVa(i2c_addr, ARDUCHIP_FIFO, FIFO_START_MASK);
 }
 int mArduCAM_OV2640::clear_fifo_flag(void )
 {
-  return I2C_W8bAd8bVa(i2c_addr, ARDUCHIP_FIFO, FIFO_CLEAR_MASK);
+  SPI_CS_EN(1);
+  byte data[]={ARDUCHIP_FIFO|0x80, FIFO_CLEAR_MASK};
+  SPI_Transfer(data, sizeof(data));
+  SPI_CS_EN(0);
+  return 0;
 }
 uint32_t mArduCAM_OV2640::read_fifo_length(void )
 {
@@ -65,24 +104,18 @@ uint32_t mArduCAM_OV2640::read_fifo_length(void )
   len2 = SPI_Get8b(SPI_REG_FIFO_SIZE2);
   len3 = SPI_Get8b(SPI_REG_FIFO_SIZE3) & 0x7f;
   length = ((len3 << 16) | (len2 << 8) | len1) & 0x07fffff;
+  SPI_CS_EN(0);
   return length;
 }
 
-
-int mArduCAM_OV2640::set_fifo_burst_end()
-{
-  
-  return 0;
-}
 int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
 {
-  SPI_CS_EN(1);
   int ret=0;
   do{
     uint32_t len = read_fifo_length();
   
-    Serial.print("length:");
-    Serial.println(len);
+    SPI_CS_EN(1);
+    printfx("length:%u",len);
     
     byte dat = SPI_REG_BURST_FIFO_READ;
     SPI_Transfer(&dat);
@@ -92,23 +125,13 @@ int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
       ret=-1;
       break;
     }
-  
+    delay(50);
     //Find fifo header and depelete residue
     uint8_t temp = 0, temp_last = 0;
     temp=0;
     SPI_Transfer(&temp);
     len --;
-    while ( len-- )
-    {
-      temp_last = temp;
-      temp=0;
-      SPI_Transfer(&temp);
-      if ((temp == 0xD8) & (temp_last == 0xFF))
-      {
-        break;
-      }
-    }
-  
+    
     if( len == 0 )
     {
       ret=-1;
@@ -127,10 +150,15 @@ int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
 int mArduCAM_OV2640::fifo_burst_recv(byte* buff, int recvL)
 {
   
-  SPI_CS_EN(1);
   int ret= SPI_Transfer(buff,recvL);
-  
   return ret;
+}
+
+int mArduCAM_OV2640::set_fifo_burst_end()
+{
+  
+  SPI_CS_EN(0);
+  return 0;
 }
 int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
 {
@@ -145,19 +173,6 @@ mArduCAM_OV2640::mArduCAM_OV2640(int CS_PIN)
 {
   i2c_addr = 0x30;
   SPI_INIT(CS_PIN);
-  SPI_CS_EN(1);
-  byte data[2];
-  while(1){
-    data[0]=0;
-    data[1]=0x22;
-    SPI_Transfer(data, sizeof(data));
-    if (data[1] == 0x55){
-      Serial.println(F("ACK CMD SPI interface OK."));break;
-    }else{
-      Serial.print(F("ACK CMD SPI interface Error!::"));
-      Serial.println(data[1],HEX);
-      delay(1000);continue;
-    }
-  }
   SPI_CS_EN(0);
+
 }
