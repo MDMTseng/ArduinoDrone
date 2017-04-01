@@ -1,6 +1,6 @@
 
 #include <Wire.h>
-#include "mArduCAM_OV2640.hpp"
+#include "mArduCAM_OV2640_mini.hpp"
 #include "commonTools.h"
 
 mArduCAM_OV2640 cam_2MP(53);
