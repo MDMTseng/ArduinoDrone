@@ -1,9 +1,9 @@
-#include "mArduCAM_OV2640.hpp"
+#include "mArduCAM_OV2640_mini.hpp"
 
 
 #include "commonTools.h"
 //#define DBUG_PRINT
-int mArduCAM_OV2640::Init()
+int mArduCAM_OV2640_mini::Init()
 {
 
 
@@ -71,7 +71,7 @@ int mArduCAM_OV2640::Init()
 }
 
 
-int mArduCAM_OV2640::start_capture(void)
+int mArduCAM_OV2640_mini::start_capture(void)
 {
   SPI_CS_EN(1);
   byte data[]={ARDUCHIP_FIFO|0x80, FIFO_CLEAR_MASK};
@@ -79,7 +79,7 @@ int mArduCAM_OV2640::start_capture(void)
   SPI_CS_EN(0);
   return 0;
 }
-int mArduCAM_OV2640::flush_fifo(void)
+int mArduCAM_OV2640_mini::flush_fifo(void)
 {
   SPI_CS_EN(1);
   byte data[]={ARDUCHIP_FIFO|0x80, FIFO_START_MASK};
@@ -88,7 +88,7 @@ int mArduCAM_OV2640::flush_fifo(void)
   return 0;
   return I2C_W8bAd8bVa(i2c_addr, ARDUCHIP_FIFO, FIFO_START_MASK);
 }
-int mArduCAM_OV2640::clear_fifo_flag(void )
+int mArduCAM_OV2640_mini::clear_fifo_flag(void )
 {
   SPI_CS_EN(1);
   byte data[]={ARDUCHIP_FIFO|0x80, FIFO_CLEAR_MASK};
@@ -96,7 +96,7 @@ int mArduCAM_OV2640::clear_fifo_flag(void )
   SPI_CS_EN(0);
   return 0;
 }
-uint32_t mArduCAM_OV2640::read_fifo_length(void )
+uint32_t mArduCAM_OV2640_mini::read_fifo_length(void )
 {
   SPI_CS_EN(1);
   uint32_t len1, len2, len3, length = 0;
@@ -108,7 +108,7 @@ uint32_t mArduCAM_OV2640::read_fifo_length(void )
   return length;
 }
 
-int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
+int mArduCAM_OV2640_mini::set_fifo_burst_begin(uint32_t *fifoL)
 {
   int ret=0;
   do{
@@ -147,20 +147,20 @@ int mArduCAM_OV2640::set_fifo_burst_begin(uint32_t *fifoL)
   return ret;
 }
 
-int mArduCAM_OV2640::fifo_burst_recv(byte* buff, int recvL)
+int mArduCAM_OV2640_mini::fifo_burst_recv(byte* buff, int recvL)
 {
   
   int ret= SPI_Transfer(buff,recvL);
   return ret;
 }
 
-int mArduCAM_OV2640::set_fifo_burst_end()
+int mArduCAM_OV2640_mini::set_fifo_burst_end()
 {
   
   SPI_CS_EN(0);
   return 0;
 }
-int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
+int mArduCAM_OV2640_mini::get_vid_pid( uint8_t *vid, uint8_t *pid)
 {
   int ret = 0;
   if ((ret = I2C_W8bAd8bVa(i2c_addr, 0xff, 0x01)) != 0)return ret;
@@ -169,7 +169,7 @@ int mArduCAM_OV2640::get_vid_pid( uint8_t *vid, uint8_t *pid)
   return 0;
 }
 
-mArduCAM_OV2640::mArduCAM_OV2640(int CS_PIN)
+mArduCAM_OV2640_mini::mArduCAM_OV2640_mini(int CS_PIN)
 {
   i2c_addr = 0x30;
   SPI_INIT(CS_PIN);

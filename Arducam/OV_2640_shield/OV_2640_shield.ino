@@ -3,7 +3,7 @@
 #include "mArduCAM_OV2640_mini.hpp"
 #include "commonTools.h"
 
-mArduCAM_OV2640 cam_2MP(53);
+mArduCAM_OV2640_mini cam_2MP(53);
 void setup() {
   Wire.begin();        // join i2c bus (address optional for master)
   Serial.begin(250000);  // start serial for output
@@ -58,7 +58,7 @@ struct RGB565
   unsigned int B : 5;
 };
 char grayAscii[]="@%#*+=-:.     ";
-int read_fifo_burst(mArduCAM_OV2640 myCAM)
+int read_fifo_burst(mArduCAM_OV2640_mini myCAM)
 {
   uint32_t length = 0;
   

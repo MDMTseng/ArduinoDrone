@@ -7,10 +7,10 @@
 //#include <avr/pgmspace.h>
 
 
-class mArduCAM_OV2640 : public mArduCAM_proto,public mArduCAM_SPI,public mArduCAM_I2C
+class mArduCAM_OV2640_mini : public mArduCAM_proto,public mArduCAM_SPI,public mArduCAM_I2C
 {
   public:
-  mArduCAM_OV2640(int CS_PIN);
+  mArduCAM_OV2640_mini(int CS_PIN);
   int Init( void );
   int get_vid_pid( uint8_t *vid, uint8_t *pid);
   int flush_fifo(void);

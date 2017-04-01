@@ -55,7 +55,7 @@ class mArduCAM_I2C
     };
     static int I2C_W16bAd8bVa(byte devAddr,uint16_t addr,byte value)
     {
-      byte buf[]={addr>> 8,addr& 0x00FF,value};
+      byte buf[]={(byte)(addr>> 8),(byte)(addr& 0x00FF),value};
       return I2C_WArr(devAddr,buf,sizeof(buf));
     };
     

@@ -23,16 +23,14 @@ class mArduCAM_proto
   virtual int Init( void );
   virtual int get_vid_pid( uint8_t *vid, uint8_t *pid);
 
-  
+  /*
   virtual int flush_fifo(void);
   virtual int clear_fifo_flag(void);
   virtual int start_capture(void);
 
-  /*SPI*/
-  
   virtual int set_fifo_burst_begin(uint32_t *fifoL);
   virtual int fifo_burst_recv(byte* buff, int recvL);
-  virtual int set_fifo_burst_end();
+  virtual int set_fifo_burst_end();*/
 
 
   
